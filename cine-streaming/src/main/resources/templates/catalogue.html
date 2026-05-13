@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catalogue — CINÉ-STREAMING</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --bg:#0a0a0f; --surface:#1a1a2e; --surface2:#12121a;
+            --accent:#e50914; --accent2:#ff6b6b;
+            --text:#ffffff; --text-muted:#aaaaaa;
+            --card-bg:#1e1e2e; --nav-bg:rgba(10,10,15,0.95);
+            --border:rgba(255,255,255,0.07);
+        }
+        body.theme-rose { --bg:#1a0a12; --surface:#3a1530; --surface2:#2a1020; --accent:#e91e8c; --accent2:#ff69b4; --card-bg:#2a1525; --nav-bg:rgba(26,10,18,0.95); }
+        body.theme-bleu  { --bg:#0a0f1a; --surface:#152035; --surface2:#0f1a2a; --accent:#1e90ff; --accent2:#63b3ff; --card-bg:#152030; --nav-bg:rgba(10,15,26,0.95); }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--bg); color:var(--text); font-family:'Outfit',sans-serif; overflow-x:hidden; transition:background 0.5s; }
+
+        /* NAVBAR */
+        nav { position:fixed; top:0; left:0; right:0; z-index:1000; background:var(--nav-bg); backdrop-filter:blur(20px); border-bottom:1px solid var(--border); padding:0 40px; height:65px; display:flex; align-items:center; justify-content:space-between; }
+        .nav-left { display:flex; align-items:center; gap:40px; }
+        .logo { font-family:'Bebas Neue',cursive; font-size:28px; color:var(--accent); letter-spacing:3px; text-decoration:none; }
+        .nav-links { display:flex; gap:28px; list-style:none; }
+        .nav-links a { color:var(--text-muted); text-decoration:none; font-size:14px; font-weight:500; transition:color 0.2s; position:relative; }
+        .nav-links a::after { content:''; position:absolute; bottom:-4px; left:0; width:0; height:2px; background:var(--accent); transition:width 0.3s; }
+        .nav-links a:hover { color:var(--text); }
+        .nav-links a:hover::after,.nav-links a.active::after { width:100%; }
+        .nav-links a.active { color:var(--text); }
+        .nav-right { display:flex; align-items:center; gap:16px; }
+        .nav-icon { width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,0.07); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; color:var(--text-muted); text-decoration:none; }
+        .nav-icon:hover { background:var(--accent); border-color:var(--accent); color:white; }
+        .avatar { width:38px; height:38px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px; cursor:pointer; border:2px solid transparent; transition:all 0.2s; }
+        .avatar:hover { border-color:var(--text); }
+
+        /* LAYOUT */
+        .page-wrapper { display:flex; padding-top:65px; min-height:100vh; }
+
+        /* SIDEBAR */
+        .sidebar { width:260px; flex-shrink:0; background:var(--surface2); border-right:1px solid var(--border); padding:28px 18px; position:sticky; top:65px; height:calc(100vh - 65px); overflow-y:auto; }
+        .sidebar-section { margin-bottom:28px; }
+        .sidebar-title { font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+        .sidebar-title::before { content:''; display:block; width:3px; height:12px; background:var(--accent); border-radius:2px; }
+
+        .sidebar-search { display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:10px 14px; transition:all 0.3s; }
+        .sidebar-search:focus-within { border-color:var(--accent); }
+        .sidebar-search input { background:none; border:none; outline:none; color:var(--text); font-family:'Outfit',sans-serif; font-size:13px; width:100%; }
+        .sidebar-search input::placeholder { color:var(--text-muted); }
+
+        .type-toggle { display:flex; gap:6px; flex-wrap:wrap; }
+        .type-btn { padding:7px 14px; border-radius:20px; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text-muted); font-family:'Outfit',sans-serif; font-size:12px; font-weight:600; cursor:pointer; transition:all 0.2s; }
+        .type-btn:hover { color:var(--text); border-color:rgba(255,255,255,0.2); }
+        .type-btn.active { background:var(--accent); border-color:var(--accent); color:white; }
+
+        .filter-group { display:flex; flex-direction:column; gap:5px; }
+        .filter-btn { display:flex; align-items:center; justify-content:space-between; padding:9px 12px; border-radius:8px; background:transparent; border:1px solid transparent; color:var(--text-muted); font-family:'Outfit',sans-serif; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; text-align:left; }
+        .filter-btn:hover { background:rgba(255,255,255,0.05); color:var(--text); }
+        .filter-btn.active { background:rgba(229,9,20,0.12); border-color:var(--accent); color:var(--text); }
+        .filter-btn .count { font-size:11px; background:rgba(255,255,255,0.1); padding:2px 7px; border-radius:10px; }
+        .filter-btn.active .count { background:var(--accent); color:white; }
+
+        .reset-btn { width:100%; padding:10px; border-radius:8px; background:transparent; border:1px solid var(--border); color:var(--text-muted); font-family:'Outfit',sans-serif; font-size:13px; cursor:pointer; transition:all 0.2s; margin-top:4px; }
+        .reset-btn:hover { border-color:var(--accent); color:var(--accent); }
+
+        /* MAIN */
+        .main-content { flex:1; padding:30px 36px; }
+        .catalogue-header { margin-bottom:28px; }
+        .catalogue-title { font-family:'Bebas Neue',cursive; font-size:36px; letter-spacing:3px; margin-bottom:4px; }
+        .catalogue-subtitle { font-size:14px; color:var(--text-muted); margin-bottom:4px; }
+        .results-count { font-size:13px; color:var(--text-muted); }
+        .results-count span { color:var(--accent); font-weight:600; }
+
+        /* CATEGORY SECTION */
+        .cat-section { margin-bottom:48px; }
+        .cat-header { display:flex; align-items:center; gap:12px; margin-bottom:18px; padding-bottom:12px; border-bottom:1px solid var(--border); }
+        .cat-icon { width:34px; height:34px; border-radius:8px; background:var(--accent); display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0; }
+        .cat-name { font-family:'Bebas Neue',cursive; font-size:24px; letter-spacing:2px; }
+        .cat-count { font-size:12px; color:var(--text-muted); background:rgba(255,255,255,0.07); padding:3px 10px; border-radius:10px; margin-left:auto; }
+
+        .films-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(155px,1fr)); gap:14px; }
+
+        /* FILM CARD */
+        .film-card { position:relative; border-radius:10px; overflow:hidden; cursor:pointer; aspect-ratio:2/3; background:var(--card-bg); transition:transform 0.3s,box-shadow 0.3s; }
+        .film-card:hover { transform:scale(1.05) translateY(-4px); box-shadow:0 20px 50px rgba(0,0,0,0.7); z-index:10; }
+        .film-card img { width:100%; height:100%; object-fit:cover; display:block; transition:transform 0.4s; }
+        .film-card:hover img { transform:scale(1.08); }
+        .film-card-overlay { position:absolute; inset:0; background:linear-gradient(to top,rgba(0,0,0,0.95) 0%,rgba(0,0,0,0.2) 55%,transparent 100%); opacity:0; transition:opacity 0.35s ease; display:flex; flex-direction:column; justify-content:flex-end; padding:14px; }
+        .film-card:hover .film-card-overlay { opacity:1; }
+        .film-card-title { font-size:12px; font-weight:600; margin-bottom:8px; line-height:1.3; }
+        .film-card-actions { display:flex; gap:7px; opacity:0; transform:translateY(10px); transition:all 0.35s ease 0.05s; }
+        .film-card:hover .film-card-actions { opacity:1; transform:translateY(0); }
+        .card-btn { width:32px; height:32px; border-radius:50%; border:2px solid rgba(255,255,255,0.7); background:rgba(0,0,0,0.5); color:white; display:flex; align-items:center; justify-content:center; font-size:12px; cursor:pointer; transition:all 0.2s; backdrop-filter:blur(5px); }
+        .card-btn:hover { background:var(--accent); border-color:var(--accent); transform:scale(1.1); }
+        .card-btn.play { background:var(--accent); border-color:var(--accent); width:36px; height:36px; font-size:13px; }
+        .card-btn.play:hover { background:var(--accent2); transform:scale(1.15); }
+        .film-rating { position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.8); backdrop-filter:blur(5px); border-radius:4px; padding:3px 6px; font-size:11px; font-weight:600; color:#f5c518; display:flex; align-items:center; gap:3px; }
+        .type-badge { position:absolute; top:8px; left:8px; background:var(--accent); color:white; font-size:9px; font-weight:700; letter-spacing:1px; text-transform:uppercase; padding:2px 7px; border-radius:3px; }
+
+        /* NO RESULTS */
+        .no-results { text-align:center; padding:80px 20px; color:var(--text-muted); }
+        .no-results i { font-size:56px; margin-bottom:20px; opacity:0.2; display:block; }
+        .no-results h3 { font-size:20px; margin-bottom:8px; color:var(--text); }
+
+        /* ===== DETAIL PAGE ===== */
+        .detail-page { display:none; position:fixed; inset:0; z-index:2000; background:var(--bg); overflow-y:auto; }
+        .detail-page.open { display:block; animation:fadeIn 0.3s ease; }
+        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+        .detail-hero { position:relative; height:55vh; overflow:hidden; }
+        .detail-bg { width:100%; height:100%; object-fit:cover; object-position:center top; }
+        .detail-gradient { position:absolute; inset:0; background:linear-gradient(to top,var(--bg) 0%,rgba(10,10,15,0.4) 60%,transparent 100%), linear-gradient(to right,var(--bg) 0%,transparent 55%); }
+
+        .back-btn { position:absolute; top:24px; left:24px; z-index:10; display:flex; align-items:center; gap:8px; background:rgba(0,0,0,0.6); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.15); color:white; padding:10px 20px; border-radius:25px; font-family:'Outfit',sans-serif; font-size:14px; font-weight:600; cursor:pointer; transition:all 0.2s; }
+        .back-btn:hover { background:var(--accent); border-color:var(--accent); transform:translateX(-3px); }
+
+        .detail-content { padding:0 60px 60px; margin-top:-130px; position:relative; z-index:1; }
+        .detail-layout { display:flex; gap:40px; align-items:flex-start; }
+
+        .detail-poster { width:200px; flex-shrink:0; border-radius:12px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.8); }
+        .detail-poster img { width:100%; display:block; }
+
+        .detail-info { flex:1; padding-top:30px; }
+        .detail-badge { display:inline-block; background:var(--accent); color:white; font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; padding:4px 12px; border-radius:3px; margin-bottom:12px; }
+        .detail-title { font-family:'Bebas Neue',cursive; font-size:clamp(36px,5vw,70px); line-height:1; letter-spacing:2px; margin-bottom:16px; }
+
+        .detail-meta { display:flex; flex-wrap:wrap; gap:14px; margin-bottom:18px; }
+        .meta-item { display:flex; align-items:center; gap:6px; font-size:13px; color:var(--text-muted); }
+        .meta-item i { color:var(--accent); font-size:12px; }
+        .meta-item.rating { color:#f5c518; font-weight:700; }
+        .meta-item.rating i { color:#f5c518; }
+
+        .detail-tags { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px; }
+        .detail-tag { padding:5px 14px; border-radius:20px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); font-size:12px; font-weight:500; color:var(--text-muted); }
+
+        .detail-desc { font-size:15px; color:rgba(255,255,255,0.78); line-height:1.75; margin-bottom:24px; max-width:700px; }
+
+        .detail-cast-section { margin-bottom:24px; }
+        .detail-cast-section h4 { font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); margin-bottom:10px; }
+        .cast-chips { display:flex; gap:8px; flex-wrap:wrap; }
+        .cast-chip { padding:6px 14px; border-radius:20px; background:rgba(255,255,255,0.05); border:1px solid var(--border); font-size:12px; color:var(--text-muted); }
+
+        .detail-btns { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:36px; }
+        .btn-primary { display:flex; align-items:center; gap:8px; background:var(--accent); color:white; border:none; padding:14px 32px; border-radius:8px; font-family:'Outfit',sans-serif; font-size:15px; font-weight:600; cursor:pointer; transition:all 0.2s; }
+        .btn-primary:hover { background:var(--accent2); transform:scale(1.03); }
+        .btn-secondary { display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.1); color:white; border:1px solid rgba(255,255,255,0.2); padding:14px 24px; border-radius:8px; font-family:'Outfit',sans-serif; font-size:15px; font-weight:500; cursor:pointer; transition:all 0.2s; }
+        .btn-secondary:hover { background:rgba(255,255,255,0.18); }
+
+        .detail-extra { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:20px; padding-top:28px; border-top:1px solid var(--border); }
+        .extra-item h5 { font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px; }
+        .extra-item p { font-size:14px; color:var(--text); }
+
+        /* TOAST */
+        .toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--surface); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:14px 24px; font-size:14px; font-weight:500; z-index:9999; transition:transform 0.4s cubic-bezier(0.4,0,0.2,1); display:flex; align-items:center; gap:10px; }
+        .toast.show { transform:translateX(-50%) translateY(0); }
+        .toast i { color:var(--accent); }
+
+        /* FOOTER */
+        footer { background:#050508; border-top:1px solid var(--border); padding:24px 60px; }
+        .footer-copy { font-size:12px; color:var(--text-muted); text-align:center; }
+        .footer-copy span { color:var(--accent); font-weight:600; }
+
+        ::-webkit-scrollbar { width:6px; }
+        ::-webkit-scrollbar-track { background:var(--bg); }
+        ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.15); border-radius:3px; }
+    </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav>
+    <div class="nav-left">
+        <a href="/" class="logo">CINÉ</a>
+        <ul class="nav-links">
+            <li><a href="/">Accueil</a></li>
+            <li><a href="/films">Films</a></li>
+            <li><a href="/series">Séries</a></li>
+            <li><a href="/animes">Animés</a></li>
+            <li><a href="/catalogue" class="active">Catalogue</a></li>
+        </ul>
+    </div>
+    <div class="nav-right">
+        <div class="nav-icon" onclick="openSettings()">
+            <i class="fas fa-cog"></i>
+        </div>
+        <div class="avatar">D</div>
+    </div>
+</nav>
+
+<!-- PAGE WRAPPER -->
+<div class="page-wrapper">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-section">
+            <div class="sidebar-title">Recherche</div>
+            <div class="sidebar-search">
+                <i class="fas fa-search" style="color:var(--text-muted);font-size:13px"></i>
+                <input type="text" placeholder="Titre, acteur..." id="sideSearch" oninput="applyFilters()">
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="sidebar-title">Type</div>
+            <div class="type-toggle">
+                <button class="type-btn active" onclick="setType('tous',this)">Tous</button>
+                <button class="type-btn" onclick="setType('film',this)">Films</button>
+                <button class="type-btn" onclick="setType('serie',this)">Séries</button>
+                <button class="type-btn" onclick="setType('anime',this)">Animés</button>
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="sidebar-title">Genre</div>
+            <div class="filter-group">
+                <button class="filter-btn active" onclick="setGenre('tous',this)">Tous les genres <span class="count" id="cnt-tous"></span></button>
+                <button class="filter-btn" onclick="setGenre('action',this)"><span>⚡ Action</span><span class="count" id="cnt-action"></span></button>
+                <button class="filter-btn" onclick="setGenre('romance',this)"><span>💕 Romance</span><span class="count" id="cnt-romance"></span></button>
+                <button class="filter-btn" onclick="setGenre('thriller',this)"><span>🔍 Thriller</span><span class="count" id="cnt-thriller"></span></button>
+                <button class="filter-btn" onclick="setGenre('horreur',this)"><span>💀 Horreur</span><span class="count" id="cnt-horreur"></span></button>
+                <button class="filter-btn" onclick="setGenre('comedie',this)"><span>😄 Comédie</span><span class="count" id="cnt-comedie"></span></button>
+                <button class="filter-btn" onclick="setGenre('documentaire',this)"><span>🎬 Documentaire</span><span class="count" id="cnt-documentaire"></span></button>
+                <button class="filter-btn" onclick="setGenre('anime',this)"><span>🎌 Animés</span><span class="count" id="cnt-anime"></span></button>
+            </div>
+        </div>
+
+        <button class="reset-btn" onclick="resetFilters()"><i class="fas fa-redo" style="margin-right:6px"></i>Réinitialiser</button>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main-content">
+        <div class="catalogue-header">
+            <h1 class="catalogue-title">Catalogue</h1>
+            <p class="catalogue-subtitle">Découvrez tous nos films, séries et animés</p>
+            <p class="results-count"><span id="totalCount">0</span> titres disponibles</p>
+        </div>
+        <div id="catalogueContent"></div>
+    </main>
+</div>
+
+<!-- FOOTER -->
+<footer>
+    <p class="footer-copy">© <span>CINÉ_STREAMING</span> 2025/2026 — Tous droits réservés</p>
+</footer>
+
+<!-- ===== PAGE DÉTAIL ===== -->
+<div class="detail-page" id="detailPage">
+    <div class="detail-hero">
+        <img class="detail-bg" id="detailBg" src="" alt="">
+        <div class="detail-gradient"></div>
+        <button class="back-btn" onclick="closeDetail()">
+            <i class="fas fa-arrow-left"></i> Retour au catalogue
+        </button>
+    </div>
+    <div class="detail-content">
+        <div class="detail-layout">
+            <div class="detail-poster">
+                <img id="detailPoster" src="" alt="">
+            </div>
+            <div class="detail-info">
+                <span class="detail-badge" id="detailBadge"></span>
+                <h1 class="detail-title" id="detailTitle"></h1>
+                <div class="detail-meta">
+                    <div class="meta-item rating"><i class="fas fa-star"></i><span id="detailRating"></span></div>
+                    <div class="meta-item"><i class="fas fa-calendar"></i><span id="detailAnnee"></span></div>
+                    <div class="meta-item"><i class="fas fa-clock"></i><span id="detailDuree"></span></div>
+                    <div class="meta-item"><i class="fas fa-film"></i><span id="detailType"></span></div>
+                    <div class="meta-item"><i class="fas fa-globe"></i><span id="detailPays"></span></div>
+                </div>
+                <div class="detail-tags" id="detailTags"></div>
+                <p class="detail-desc" id="detailDesc"></p>
+                <div class="detail-cast-section">
+                    <h4>Casting</h4>
+                    <div class="cast-chips" id="detailCast"></div>
+                </div>
+                <div class="detail-btns">
+                    <button class="btn-primary" id="watchBtn" onclick="watchCurrentFilm()"><i class="fas fa-play"></i> Regarder maintenant</button>
+                    <button class="btn-secondary" id="listBtn" onclick="toggleDetailList()"><i class="fas fa-plus"></i> Ma liste</button>
+                    <button class="btn-secondary"><i class="fas fa-share-alt"></i> Partager</button>
+                </div>
+            </div>
+        </div>
+        <div class="detail-extra">
+            <div class="extra-item"><h5>Réalisateur</h5><p id="detailReal"></p></div>
+            <div class="extra-item"><h5>Studio</h5><p id="detailStudio"></p></div>
+            <div class="extra-item"><h5>Langue</h5><p id="detailLangue"></p></div>
+            <div class="extra-item"><h5>Qualité</h5><p id="detailQualite"></p></div>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><i class="fas fa-check-circle"></i><span id="toastMsg"></span></div>
+
+<script>
+// ===== DONNÉES =====
+const FILMS = [
+    // ACTION
+    {id:1,  titre:"Inception",            annee:"2010",rating:"8.8",duree:"2h 28min",type:"film", genre:"action",      pays:"USA",          bg:"0d0d1a",real:"Christopher Nolan",   studio:"Warner Bros",     langue:"Anglais", qualite:"4K · HD · SD",
+     cast:["Leonardo DiCaprio","Joseph Gordon-Levitt","Tom Hardy","Elliot Page"],
+     desc:"Dom Cobb est un voleur expert en infiltration de rêves qui s'empare des secrets au plus profond de l'esprit endormi. Recherché dans le monde entier, il se voit offrir une chance de retrouver sa vie d'avant s'il parvient à accomplir une mission impossible : implanter une idée dans l'esprit d'un PDG.",
+     tags:["Action","Sci-Fi","Mystère"]},
+
+    {id:2,  titre:"Mad Max: Fury Road",   annee:"2015",rating:"8.1",duree:"2h 0min", type:"film", genre:"action",      pays:"Australie",    bg:"1a0800",real:"George Miller",       studio:"Warner Bros",     langue:"Anglais", qualite:"4K · HD",
+     cast:["Tom Hardy","Charlize Theron","Nicholas Hoult"],
+     desc:"Dans un monde post-apocalyptique désertique, Max Rockatansky aide Furiosa à s'échapper du tyran Immortan Joe avec ses épouses. Une course-poursuite épique et haletante à travers le désert.",
+     tags:["Action","Aventure","Post-Apo"]},
+
+    {id:3,  titre:"John Wick",            annee:"2014",rating:"7.4",duree:"1h 41min",type:"film", genre:"action",      pays:"USA",          bg:"120010",real:"Chad Stahelski",      studio:"Lionsgate",       langue:"Anglais", qualite:"4K · HD · SD",
+     cast:["Keanu Reeves","Michael Nyqvist","Alfie Allen"],
+     desc:"John Wick, ancien tueur à gages légendaire, sort de sa retraite après que des gangsters tuent son chien, dernier souvenir de sa femme décédée. Sa vengeance sera implacable et spectaculaire.",
+     tags:["Action","Thriller","Crime"]},
+
+    {id:4,  titre:"The Dark Knight",      annee:"2008",rating:"9.0",duree:"2h 32min",type:"film", genre:"action",      pays:"USA",          bg:"080808",real:"Christopher Nolan",   studio:"Warner Bros",     langue:"Anglais", qualite:"4K · HD · SD",
+     cast:["Christian Bale","Heath Ledger","Aaron Eckhart","Michael Caine"],
+     desc:"Batman fait face à son ennemi le plus redoutable: le Joker, un criminel anarchiste qui veut plonger Gotham City dans le chaos absolu. Heath Ledger livre une performance légendaire et inoubliable.",
+     tags:["Action","Crime","Drame"]},
+
+    {id:5,  titre:"Mission Impossible 7", annee:"2023",rating:"7.7",duree:"2h 43min",type:"film", genre:"action",      pays:"USA",          bg:"001a10",real:"Christopher McQuarrie",studio:"Paramount",       langue:"Anglais", qualite:"4K · HD",
+     cast:["Tom Cruise","Hayley Atwell","Ving Rhames","Simon Pegg"],
+     desc:"Ethan Hunt et son équipe de l'IMF doivent neutraliser une intelligence artificielle dévastatrice avant qu'elle ne tombe entre de mauvaises mains. Des cascades réelles et un suspense haletant.",
+     tags:["Action","Espionnage","Aventure"]},
+
+    {id:6,  titre:"Top Gun: Maverick",    annee:"2022",rating:"8.3",duree:"2h 10min",type:"film", genre:"action",      pays:"USA",          bg:"001018",real:"Joseph Kosinski",     studio:"Paramount",       langue:"Anglais", qualite:"4K · HD · SD",
+     cast:["Tom Cruise","Miles Teller","Jennifer Connelly","Val Kilmer"],
+     desc:"Après plus de 30 ans de service, Pete 'Maverick' Mitchell continue de repousser les limites comme pilote d'essai d'élite. Il doit former une nouvelle génération de pilotes pour une mission extrêmement dangereuse.",
+     tags:["Action","Drame","Aviation"]},
+
+    // ROMANCE
+    {id:7,  titre:"La La Land",           annee:"2016",rating:"8.0",duree:"2h 8min", type:"film", genre:"romance",     pays:"USA",          bg:"1a0d14",real:"Damien Chazelle",     studio:"Summit",          langue:"Anglais", qualite:"4K · HD · SD",
+     cast:["Ryan Gosling","Emma Stone"],
+     desc:"Mia, actrice en herbe, et Sebastian, pianiste de jazz passionné, tombent amoureux dans les rues ensoleillées de Los Angeles. Une comédie musicale éblouissante sur les rêves, les sacrifices et l'amour.",
+     tags:["Romance","Comédie musicale","Drame"]},
+
+    {id:8,  titre:"Titanic",              annee:"1997",rating:"7.9",duree:"3h 14min",type:"film", genre:"romance",     pays:"USA",          bg:"001218",real:"James Cameron",       studio:"20th Century Fox",langue:"Anglais", qualite:"HD · SD",
+     cast:["Leonardo DiCaprio","Kate Winslet","Billy Zane"],
+     desc:"Jack et Rose, deux jeunes gens de milieux opposés, tombent éperdument amoureux à bord du Titanic lors de son voyage inaugural. Un drame romantique épique devenu l'un des plus grands succès de l'histoire du cinéma.",
+     tags:["Romance","Drame","Catastrophe"]},
+
+    {id:9,  titre:"The Notebook",         annee:"2004",rating:"7.8",duree:"2h 3min", type:"film", genre:"romance",     pays:"USA",          bg:"180a0a",real:"Nick Cassavetes",     studio:"New Line Cinema", langue:"Anglais", qualite:"HD · SD",
+     cast:["Ryan Gosling","Rachel McAdams","James Garner"],
+     desc:"L'histoire d'amour passionnée entre Noah et Allie, deux jeunes gens de milieux différents dont l'amour transcende le temps et les obstacles. Un classique absolu du cinéma romantique.",
+     tags:["Romance","Drame"]},
+
+    {id:10, titre:"Amélie Poulain",       annee:"2001",rating:"8.3",duree:"2h 2min", type:"film", genre:"romance",     pays:"France",       bg:"100018",real:"Jean-Pierre Jeunet",  studio:"UGC Fox",         langue:"Français",qualite:"HD · SD",
+     cast:["Audrey Tautou","Mathieu Kassovitz","Rufus"],
+     desc:"Amélie est une jeune femme timide et fantasque qui décide d'améliorer la vie des gens autour d'elle. Une œuvre poétique et enchanteresse qui célèbre Paris, la vie et les petits bonheurs du quotidien.",
+     tags:["Romance","Comédie","Fantaisie"]},
+
+    {id:11, titre:"Before Sunrise",       annee:"1995",rating:"8.1",duree:"1h 41min",type:"film", genre:"romance",     pays:"USA/Autriche", bg:"001800",real:"Richard Linklater",   studio:"Castle Rock",     langue:"Anglais", qualite:"HD",
+     cast:["Ethan Hawke","Julie Delpy"],
+     desc:"Jesse et Céline se rencontrent dans un train et décident de passer une nuit inoubliable à Vienne avant de se séparer pour toujours. Une conversation poétique sur l'amour, la vie et le temps qui passe.",
+     tags:["Romance","Drame","Indie"]},
+
+    {id:12, titre:"Pride & Prejudice",    annee:"2005",rating:"7.8",duree:"2h 9min", type:"film", genre:"romance",     pays:"Royaume-Uni",  bg:"180018",real:"Joe Wright",          studio:"Universal",       langue:"Anglais", qualite:"HD · SD",
+     cast:["Keira Knightley","Matthew Macfadyen","Judi Dench"],
+     desc:"Elizabeth Bennet, fille d'un gentleman campagnard, fait la connaissance du fier et mystérieux Mr Darcy. Une magnifique adaptation du roman de Jane Austen sur l'amour, le préjugé et les conventions sociales.",
+     tags:["Romance","Drame","Historique"]},
+
+    // THRILLER
+    {id:13, titre:"Parasite",             annee:"2019",rating:"8.5",duree:"2h 12min",type:"film", genre:"thriller",    pays:"Corée du Sud", bg:"0d1a0d",real:"Bong Joon-ho",        studio:"CJ Entertainment",langue:"Coréen", qualite:"4K · HD · SD",
+     cast:["Song Kang-ho","Lee Sun-kyun","Cho Yeo-jeong","Choi Woo-shik"],
+     desc:"La famille Kim, sans le sou, infiltre progressivement la vie luxueuse d'une riche famille. Palme d'Or à Cannes 2019 et Oscar du meilleur film — une satire sociale brillante et un thriller haletant.",
+     tags:["Thriller","Drame","Comédie noire"]},
+
+    {id:14, titre:"Gone Girl",            annee:"2014",rating:"8.1",duree:"2h 29min",type:"film", genre:"thriller",    pays:"USA",          bg:"1a0d00",real:"David Fincher",       studio:"20th Century Fox",langue:"Anglais", qualite:"4K · HD · SD",
+     cast:["Ben Affleck","Rosamund Pike","Neil Patrick Harris"],
+     desc:"Le jour de son 5ème anniversaire de mariage, Nick Dunne signale la disparition de sa femme Amy. La médiatisation de l'affaire révèle peu à peu une vérité bien plus terrifiante qu'on ne le pensait.",
+     tags:["Thriller","Mystère","Drame"]},
+
+    {id:15, titre:"Prisoners",            annee:"2013",rating:"8.1",duree:"2h 33min",type:"film", genre:"thriller",    pays:"USA",          bg:"0d000d",real:"Denis Villeneuve",    studio:"Warner Bros",     langue:"Anglais", qualite:"HD · SD",
+     cast:["Hugh Jackman","Jake Gyllenhaal","Viola Davis","Terrence Howard"],
+     desc:"Deux petites filles disparaissent lors d'un repas de Thanksgiving. Le père désespéré prend les choses en main quand la police semble piétiner. Un thriller sombre et oppressant qui ne vous lâche pas.",
+     tags:["Thriller","Crime","Drame"]},
+
+    {id:16, titre:"Zodiac",               annee:"2007",rating:"7.7",duree:"2h 37min",type:"film", genre:"thriller",    pays:"USA",          bg:"001010",real:"David Fincher",       studio:"Paramount",       langue:"Anglais", qualite:"HD · SD",
+     cast:["Jake Gyllenhaal","Mark Ruffalo","Robert Downey Jr."],
+     desc:"L'enquête sur le tueur en série Zodiac qui a terrorisé San Francisco dans les années 70. David Fincher reconstitue avec précision l'obsession et l'impuissance face à un crime jamais élucidé.",
+     tags:["Thriller","Crime","Histoire vraie"]},
+
+    {id:17, titre:"Se7en",                annee:"1995",rating:"8.6",duree:"2h 7min", type:"film", genre:"thriller",    pays:"USA",          bg:"100000",real:"David Fincher",       studio:"New Line Cinema", langue:"Anglais", qualite:"HD · SD",
+     cast:["Brad Pitt","Morgan Freeman","Kevin Spacey","Gwyneth Paltrow"],
+     desc:"Deux inspecteurs traquent un tueur en série qui commet ses meurtres selon les sept péchés capitaux. Un thriller noir et viscéral de David Fincher, considéré comme l'un des meilleurs du genre.",
+     tags:["Thriller","Crime","Policier"]},
+
+    {id:18, titre:"Shutter Island",       annee:"2010",rating:"8.1",duree:"2h 18min",type:"film", genre:"thriller",    pays:"USA",          bg:"000010",real:"Martin Scorsese",     studio:"Paramount",       langue:"Anglais", qualite:"HD · SD",
+     cast:["Leonardo DiCaprio","Mark Ruffalo","Ben Kingsley","Michelle Williams"],
+     desc:"En 1954, deux marshals enquêtent sur la disparition d'une patiente d'un hôpital psychiatrique isolé sur une île. L'atmosphère se fait de plus en plus oppressante jusqu'à un twist final dévastateur.",
+     tags:["Thriller","Mystère","Psychologique"]},
+
+    // HORREUR
+    {id:19, titre:"Hereditary",           annee:"2018",rating:"7.3",duree:"2h 7min", type:"film", genre:"horreur",     pays:"USA",          bg:"1a0808",real:"Ari Aster",           studio:"A24",             langue:"Anglais", qualite:"HD · SD",
+     cast:["Toni Collette","Alex Wolff","Milly Shapiro","Gabriel Byrne"],
+     desc:"Après la mort de leur matriarche, la famille Graham est hantée par des secrets terrifiants sur leur héritage. Ari Aster signe un film d'horreur psychologique qui redéfinit les codes du genre.",
+     tags:["Horreur","Psychologique","Familial"]},
+
+    {id:20, titre:"Get Out",              annee:"2017",rating:"7.7",duree:"1h 44min",type:"film", genre:"horreur",     pays:"USA",          bg:"080808",real:"Jordan Peele",        studio:"Universal",       langue:"Anglais", qualite:"4K · HD · SD",
+     cast:["Daniel Kaluuya","Allison Williams","Bradley Whitford","Catherine Keener"],
+     desc:"Chris visite la famille de sa petite amie blanche. Il remarque rapidement quelque chose de sinistre derrière les sourires de cette banlieue aisée. Un film d'horreur sociale oscarisé et brillant.",
+     tags:["Horreur","Thriller","Social"]},
+
+    {id:21, titre:"The Conjuring",        annee:"2013",rating:"7.5",duree:"1h 52min",type:"film", genre:"horreur",     pays:"USA",          bg:"100808",real:"James Wan",           studio:"Warner Bros",     langue:"Anglais", qualite:"HD · SD",
+     cast:["Patrick Wilson","Vera Farmiga","Ron Livingston","Lili Taylor"],
+     desc:"Les démonologues Ed et Lorraine Warren aident une famille terrorisée par une présence sinistre dans leur ferme du Rhode Island. Inspiré de faits réels, un des meilleurs films d'horreur modernes.",
+     tags:["Horreur","Surnaturel","Histoire vraie"]},
+
+    {id:22, titre:"Midsommar",            annee:"2019",rating:"7.1",duree:"2h 27min",type:"film", genre:"horreur",     pays:"USA/Suède",    bg:"181408",real:"Ari Aster",           studio:"A24",             langue:"Anglais", qualite:"HD · SD",
+     cast:["Florence Pugh","Jack Reynor","William Jackson Harper"],
+     desc:"Dani et ses amis visitent un festival d'été en Suède qui n'a lieu que tous les 90 ans. Ce qui semblait être des vacances idylliques en pleine lumière bascule rapidement vers l'horreur absolue.",
+     tags:["Horreur","Folk Horror","Drame"]},
+
+    {id:23, titre:"A Quiet Place",        annee:"2018",rating:"7.5",duree:"1h 30min",type:"film", genre:"horreur",     pays:"USA",          bg:"081010",real:"John Krasinski",      studio:"Paramount",       langue:"Anglais", qualite:"4K · HD · SD",
+     cast:["Emily Blunt","John Krasinski","Millicent Simmonds","Noah Jupe"],
+     desc:"Une famille survit dans un monde infesté de créatures aveugles mais à l'ouïe surdéveloppée. Chaque son peut signifier la mort. Un huis clos familial haletant qui joue brillamment sur le silence.",
+     tags:["Horreur","Sci-Fi","Survival"]},
+
+    {id:24, titre:"It",                   annee:"2017",rating:"7.3",duree:"2h 15min",type:"film", genre:"horreur",     pays:"USA",          bg:"180008",real:"Andy Muschietti",     studio:"Warner Bros",     langue:"Anglais", qualite:"4K · HD · SD",
+     cast:["Jaeden Martell","Bill Skarsgård","Finn Wolfhard","Sophia Lillis"],
+     desc:"À Derry dans les années 80, un groupe d'enfants surnommé le 'Club des Ratés' fait face à Pennywise, une entité malveillante qui prend l'apparence d'un clown terrifiant. Adapté du roman de Stephen King.",
+     tags:["Horreur","Surnaturel","Adolescence"]},
+
+    // COMÉDIE
+    {id:25, titre:"The Grand Budapest Hotel",annee:"2014",rating:"8.1",duree:"1h 39min",type:"film",genre:"comedie",  pays:"USA/Allemagne",bg:"1a100a",real:"Wes Anderson",        studio:"Fox Searchlight", langue:"Anglais", qualite:"4K · HD · SD",
+     cast:["Ralph Fiennes","Tony Revolori","Saoirse Ronan","F. Murray Abraham"],
+     desc:"Les aventures rocambolesques de Gustave H., concierge légendaire d'un palace européen entre les deux guerres, et de Zéro, le jeune groom qui devient son plus fidèle allié. Wes Anderson à son meilleur.",
+     tags:["Comédie","Aventure","Mystère"]},
+
+    {id:26, titre:"Superbad",             annee:"2007",rating:"7.6",duree:"1h 53min",type:"film", genre:"comedie",     pays:"USA",          bg:"0a1a0a",real:"Greg Mottola",         studio:"Columbia",        langue:"Anglais", qualite:"HD · SD",
+     cast:["Jonah Hill","Michael Cera","Christopher Mintz-Plasse","Emma Stone"],
+     desc:"Deux lycéens maladroits tentent d'obtenir de l'alcool pour une fête afin d'impressionner leurs amies. Une comédie hilarante et touchante sur l'amitié et les affres de l'adolescence.",
+     tags:["Comédie","Adolescence"]},
+
+    {id:27, titre:"Intouchables",         annee:"2011",rating:"8.5",duree:"1h 52min",type:"film", genre:"comedie",     pays:"France",       bg:"0a0a1a",real:"Olivier Nakache & Éric Toledano",studio:"Gaumont",langue:"Français",qualite:"4K · HD · SD",
+     cast:["François Cluzet","Omar Sy"],
+     desc:"Philippe, un aristocrate tétraplégique, engage Driss, un jeune banlieusard sans expérience comme aide-soignant. Une amitié improbable et magnifique naît entre deux hommes que tout oppose.",
+     tags:["Comédie","Drame","Amitié"]},
+
+    {id:28, titre:"Knives Out",           annee:"2019",rating:"7.9",duree:"2h 10min",type:"film", genre:"comedie",     pays:"USA",          bg:"1a1a0a",real:"Rian Johnson",         studio:"Lionsgate",       langue:"Anglais", qualite:"4K · HD · SD",
+     cast:["Daniel Craig","Ana de Armas","Chris Evans","Jamie Lee Curtis"],
+     desc:"Le célèbre détective Benoit Blanc est engagé pour élucider la mort mystérieuse d'un romancier fortuné entouré de sa famille dysfonctionnelle. Un whodunit brillant et jubilatoire.",
+     tags:["Comédie","Mystère","Policier"]},
+
+    {id:29, titre:"The Hangover",         annee:"2009",rating:"7.7",duree:"1h 40min",type:"film", genre:"comedie",     pays:"USA",          bg:"0a1a1a",real:"Todd Phillips",        studio:"Warner Bros",     langue:"Anglais", qualite:"HD · SD",
+     cast:["Bradley Cooper","Ed Helms","Zach Galifianakis","Justin Bartha"],
+     desc:"Trois amis organisent un enterrement de vie de garçon à Las Vegas. Au réveil, ils se retrouvent dans un hôtel saccagé sans souvenir de la nuit et doivent retrouver le marié avant son mariage.",
+     tags:["Comédie","Aventure"]},
+
+    {id:30, titre:"Game Night",           annee:"2018",rating:"7.0",duree:"1h 40min",type:"film", genre:"comedie",     pays:"USA",          bg:"1a0a1a",real:"John Francis Daley",   studio:"Warner Bros",     langue:"Anglais", qualite:"HD · SD",
+     cast:["Jason Bateman","Rachel McAdams","Kyle Chandler"],
+     desc:"Un groupe d'amis passionnés de jeux de société organise une soirée qui dégénère lorsque le frère d'un participant est kidnappé pour de vrai. Une comédie d'action frénétique et très drôle.",
+     tags:["Comédie","Action","Mystère"]},
+
+    // DOCUMENTAIRE
+    {id:31, titre:"Free Solo",            annee:"2018",rating:"8.1",duree:"1h 40min",type:"film", genre:"documentaire",pays:"USA",          bg:"0a0a0a",real:"Jimmy Chin & E. Chai Vasarhelyi",studio:"National Geographic",langue:"Anglais",qualite:"4K · HD",
+     cast:["Alex Honnold","Tommy Caldwell"],
+     desc:"Alex Honnold tente de gravir El Capitan à mains nues, sans corde ni protection, une paroi verticale de 900 mètres. Un documentaire oscarisé qui suspend le souffle du début à la fin.",
+     tags:["Documentaire","Sport","Nature"]},
+
+    {id:32, titre:"13th",                 annee:"2016",rating:"8.2",duree:"1h 40min",type:"film", genre:"documentaire",pays:"USA",          bg:"100808",real:"Ava DuVernay",         studio:"Netflix",         langue:"Anglais", qualite:"HD",
+     cast:["Angela Davis","Bryan Stevenson","Newt Gingrich"],
+     desc:"Une exploration de l'intersection entre la race, la justice et la détention de masse aux États-Unis. Un documentaire puissant et nécessaire sur les injustices du système pénitentiaire américain.",
+     tags:["Documentaire","Social","Politique"]},
+
+    {id:33, titre:"My Octopus Teacher",   annee:"2020",rating:"8.1",duree:"1h 25min",type:"film", genre:"documentaire",pays:"Afrique du Sud",bg:"001010",real:"Pippa Ehrlich",       studio:"Netflix",         langue:"Anglais", qualite:"4K · HD",
+     cast:["Craig Foster"],
+     desc:"Un cinéaste développe une relation intime avec une pieuvre sauvage dans la forêt de kelp de l'Afrique du Sud. Un documentaire magnifique oscarisé sur la connexion entre l'homme et la nature.",
+     tags:["Documentaire","Nature","Vie marine"]},
+
+    {id:34, titre:"Icarus",               annee:"2017",rating:"7.9",duree:"1h 37min",type:"film", genre:"documentaire",pays:"USA",          bg:"100010",real:"Bryan Fogel",          studio:"Netflix",         langue:"Anglais", qualite:"HD",
+     cast:["Bryan Fogel","Grigory Rodchenkov"],
+     desc:"Un cycliste amateur plonge dans le monde du dopage et découvre accidentellement l'un des plus grands scandales sportifs de l'histoire : le système de dopage d'État russe aux Jeux Olympiques.",
+     tags:["Documentaire","Sport","Politique"]},
+
+    {id:35, titre:"The Social Dilemma",   annee:"2020",rating:"7.6",duree:"1h 34min",type:"film", genre:"documentaire",pays:"USA",          bg:"001000",real:"Jeff Orlowski",        studio:"Netflix",         langue:"Anglais", qualite:"HD",
+     cast:["Tristan Harris","Aza Raskin","Jeff Seibert"],
+     desc:"Des experts de la Silicon Valley révèlent les mécanismes de manipulation des réseaux sociaux et leur impact sur la société, la démocratie et la santé mentale des utilisateurs.",
+     tags:["Documentaire","Technologie","Société"]},
+
+    {id:36, titre:"Making a Murderer",    annee:"2015",rating:"8.6",duree:"60min/ép",type:"serie",genre:"documentaire",pays:"USA",          bg:"100000",real:"Laura Ricciardi",      studio:"Netflix",         langue:"Anglais", qualite:"HD",
+     cast:["Steven Avery","Brendan Dassey"],
+     desc:"La série documentaire suit Steven Avery, un homme libéré après 18 ans de prison pour un crime qu'il n'avait pas commis, puis accusé d'un nouveau meurtre. Une enquête fascinante sur les failles judiciaires.",
+     tags:["Documentaire","Série","Crime"]},
+
+    // ANIMÉS
+    {id:37, titre:"Attack on Titan",      annee:"2023",rating:"9.0",duree:"45min/ép",type:"anime",genre:"anime",       pays:"Japon",        bg:"1a0000",real:"Yuichiro Hayashi",     studio:"MAPPA",           langue:"Japonais",qualite:"4K · HD",
+     cast:["Yûki Kaji","Marina Inoue","Yui Ishikawa"],
+     desc:"Dans un monde où l'humanité survit derrière d'immenses murs pour échapper aux Titans, Eren Yeager découvre sa destinée. La saison finale conclut magistralement l'une des séries les plus acclamées de l'histoire.",
+     tags:["Animé","Action","Fantaisie sombre"]},
+
+    {id:38, titre:"Demon Slayer",          annee:"2019",rating:"8.8",duree:"24min/ép",type:"anime",genre:"anime",      pays:"Japon",        bg:"00001a",real:"Haruo Sotozaki",       studio:"ufotable",        langue:"Japonais",qualite:"4K · HD",
+     cast:["Natsuki Hanae","Akari Kitô","Yoshitsugu Matsuoka"],
+     desc:"Tanjiro Kamado, dont la famille a été massacrée par un démon et la sœur transformée en démone, devient chasseur de démons pour la sauver. Une animation époustouflante et des combats visuellement sublimes.",
+     tags:["Animé","Action","Aventure"]},
+
+    {id:39, titre:"Jujutsu Kaisen",        annee:"2020",rating:"8.9",duree:"24min/ép",type:"anime",genre:"anime",      pays:"Japon",        bg:"001a00",real:"Sunghoo Park",         studio:"MAPPA",           langue:"Japonais",qualite:"4K · HD",
+     cast:["Junya Enoki","Yûichi Nakamura","Mikako Komatsu"],
+     desc:"Yuji Itadori, après avoir avalé un doigt maudit, rejoint une organisation secrète de sorciers pour combattre les malédictions. Une série d'action surnaturelle avec une animation de folie.",
+     tags:["Animé","Action","Surnaturel"]},
+
+    {id:40, titre:"Spy x Family",          annee:"2022",rating:"8.7",duree:"24min/ép",type:"anime",genre:"anime",      pays:"Japon",        bg:"1a1a00",real:"Kazuhiro Furuhashi",   studio:"Wit Studio & Cloverworks",langue:"Japonais",qualite:"4K · HD",
+     cast:["Takuya Eguchi","Atsumi Tanezaki","Saori Hayami"],
+     desc:"Un espion, une tueuse à gages et une petite fille télépathe forment une fausse famille pour une mission secrète. Une comédie d'action délicieuse pleine de charme et de moments touchants.",
+     tags:["Animé","Comédie","Action"]},
+
+    {id:41, titre:"Hell's Paradise",       annee:"2023",rating:"8.5",duree:"24min/ép",type:"anime",genre:"anime",      pays:"Japon",        bg:"001a1a",real:"Kaoru Suzuki",         studio:"MAPPA",           langue:"Japonais",qualite:"HD",
+     cast:["Chiaki Kobayashi","Yumiri Hanamori"],
+     desc:"Gabimaru, un ninja condamné, part sur une île mystérieuse pour trouver l'élixir d'immortalité et regagner sa liberté. Une série sombre et sanglante avec une animation remarquable.",
+     tags:["Animé","Action","Aventure"]},
+
+    {id:42, titre:"Bleach: TYBW",          annee:"2022",rating:"9.1",duree:"24min/ép",type:"anime",genre:"anime",      pays:"Japon",        bg:"1a001a",real:"Tomohisa Taguchi",     studio:"Pierrot",         langue:"Japonais",qualite:"4K · HD",
+     cast:["Masakazu Morita","Fumiko Orikasa","Kentarô Itô"],
+     desc:"La conclusion épique de Bleach : l'arc de la Guerre des Mille Ans. Ichigo Kurosaki et ses alliés font face aux Quincy dans une guerre à l'échelle des royaumes. Une animation digne des plus grandes productions.",
+     tags:["Animé","Action","Surnaturel"]},
+];
+
+const GENRE_ICONS = {action:"⚡",romance:"💕",thriller:"🔍",horreur:"💀",comedie:"😄",documentaire:"🎬",anime:"🎌"};
+const GENRE_LABELS = {action:"Action",romance:"Romance",thriller:"Thriller",horreur:"Horreur",comedie:"Comédie",documentaire:"Documentaire",anime:"Animés"};
+
+let activeGenre = 'tous';
+let activeType  = 'tous';
+let watchlist   = JSON.parse(localStorage.getItem('cine_watchlist') || '[]');
+let currentFilm = null;
+
+// ===== FILTRES =====
+function setGenre(genre, btn) {
+    activeGenre = genre;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    applyFilters();
+}
+function setType(type, btn) {
+    activeType = type;
+    document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    applyFilters();
+}
+function resetFilters() {
+    activeGenre = 'tous'; activeType = 'tous';
+    document.getElementById('sideSearch').value = '';
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('.filter-btn').classList.add('active');
+    document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('.type-btn').classList.add('active');
+    applyFilters();
+}
+
+function getFiltered() {
+    const q = document.getElementById('sideSearch').value.toLowerCase();
+    return FILMS.filter(f => {
+        const matchGenre = activeGenre === 'tous' || f.genre === activeGenre;
+        const matchType  = activeType  === 'tous' || f.type  === activeType;
+        const matchSearch = !q || f.titre.toLowerCase().includes(q) || f.cast.some(c => c.toLowerCase().includes(q));
+        return matchGenre && matchType && matchSearch;
+    });
+}
+
+function applyFilters() {
+    const filtered = getFiltered();
+    document.getElementById('totalCount').textContent = filtered.length;
+    updateCounts(filtered);
+    renderCatalogue(filtered);
+}
+
+function updateCounts(filtered) {
+    const genres = ['action','romance','thriller','horreur','comedie','documentaire','anime'];
+    document.getElementById('cnt-tous').textContent = filtered.length;
+    genres.forEach(g => {
+        const el = document.getElementById('cnt-' + g);
+        if (el) el.textContent = filtered.filter(f => f.genre === g).length;
+    });
+}
+
+// ===== RENDER =====
+function renderCatalogue(films) {
+    const container = document.getElementById('catalogueContent');
+
+    if (films.length === 0) {
+        container.innerHTML = `<div class="no-results"><i class="fas fa-film"></i><h3>Aucun résultat</h3><p>Essaie d'autres filtres</p></div>`;
+        return;
+    }
+
+    // Grouper par genre si "tous"
+    if (activeGenre === 'tous') {
+        const genres = ['action','romance','thriller','horreur','comedie','documentaire','anime'];
+        let html = '';
+        genres.forEach(g => {
+            const list = films.filter(f => f.genre === g);
+            if (!list.length) return;
+            html += `
+            <div class="cat-section">
+                <div class="cat-header">
+                    <div class="cat-icon">${GENRE_ICONS[g]}</div>
+                    <span class="cat-name">${GENRE_LABELS[g]}</span>
+                    <span class="cat-count">${list.length} titre${list.length>1?'s':''}</span>
+                </div>
+                <div class="films-grid">${list.map(buildCard).join('')}</div>
+            </div>`;
+        });
+        container.innerHTML = html;
+    } else {
+        const g = activeGenre;
+        container.innerHTML = `
+        <div class="cat-section">
+            <div class="cat-header">
+                <div class="cat-icon">${GENRE_ICONS[g]||'🎬'}</div>
+                <span class="cat-name">${GENRE_LABELS[g]||g}</span>
+                <span class="cat-count">${films.length} titre${films.length>1?'s':''}</span>
+            </div>
+            <div class="films-grid">${films.map(buildCard).join('')}</div>
+        </div>`;
+    }
+}
+
+function buildCard(f) {
+    const inList = watchlist.some(w => w.id === f.id);
+    return `
+    <div class="film-card" onclick="openDetail(${f.id})">
+        <img src="https://placehold.co/300x450/${f.bg}/999999?text=${encodeURIComponent(f.titre)}" alt="${f.titre}" loading="lazy">
+        <div class="film-rating"><i class="fas fa-star"></i> ${f.rating}</div>
+        <span class="type-badge">${f.type === 'anime' ? 'Animé' : f.type === 'serie' ? 'Série' : 'Film'}</span>
+        <div class="film-card-overlay">
+            <div class="film-card-title">${f.titre} · ${f.annee}</div>
+            <div class="film-card-actions">
+                <button class="card-btn play" title="Regarder" onclick="event.stopPropagation();watchFilmById(${f.id})"><i class="fas fa-play"></i></button>
+                <button class="card-btn" title="Infos" onclick="event.stopPropagation();openDetail(${f.id})"><i class="fas fa-info"></i></button>
+                <button class="card-btn" title="${inList?'Retirer':'Ajouter'}" onclick="event.stopPropagation();toggleList(${f.id},'${f.titre.replace(/'/g,"\\'")}','${f.annee}','${f.bg}','${f.genre}')">
+                    <i class="fas ${inList?'fa-check':'fa-plus'}"></i>
+                </button>
+            </div>
+        </div>
+    </div>`;
+}
+
+// ===== DETAIL =====
+function openDetail(id) {
+    const f = FILMS.find(x => x.id === id);
+    if (!f) return;
+    currentFilm = f;
+
+    document.getElementById('detailBg').src     = `https://placehold.co/1920x600/${f.bg}/888888?text=${encodeURIComponent(f.titre)}`;
+    document.getElementById('detailPoster').src  = `https://placehold.co/300x450/${f.bg}/aaaaaa?text=${encodeURIComponent(f.titre)}`;
+    document.getElementById('detailBadge').textContent  = GENRE_ICONS[f.genre] + ' ' + (GENRE_LABELS[f.genre] || f.genre);
+    document.getElementById('detailTitle').textContent  = f.titre;
+    document.getElementById('detailRating').textContent = f.rating;
+    document.getElementById('detailAnnee').textContent  = f.annee;
+    document.getElementById('detailDuree').textContent  = f.duree;
+    document.getElementById('detailType').textContent   = f.type === 'anime' ? 'Animé' : f.type === 'serie' ? 'Série' : 'Film';
+    document.getElementById('detailPays').textContent   = f.pays;
+    document.getElementById('detailDesc').textContent   = f.desc;
+    document.getElementById('detailReal').textContent   = f.real;
+    document.getElementById('detailStudio').textContent = f.studio;
+    document.getElementById('detailLangue').textContent = f.langue;
+    document.getElementById('detailQualite').textContent= f.qualite;
+
+    document.getElementById('detailTags').innerHTML = f.tags.map(t => `<span class="detail-tag">${t}</span>`).join('');
+    document.getElementById('detailCast').innerHTML = f.cast.map(c => `<span class="cast-chip">${c}</span>`).join('');
+
+    const inList = watchlist.some(w => w.id === f.id);
+    const lb = document.getElementById('listBtn');
+    lb.innerHTML = inList ? '<i class="fas fa-check"></i> Dans ma liste' : '<i class="fas fa-plus"></i> Ma liste';
+
+    document.getElementById('detailPage').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    document.getElementById('detailPage').scrollTop = 0;
+}
+
+function closeDetail() {
+    document.getElementById('detailPage').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function watchCurrentFilm() {
+    if (currentFilm) window.location.href = `/film/${currentFilm.id}/watch`;
+}
+function watchFilmById(id) { window.location.href = `/film/${id}/watch`; }
+
+function toggleDetailList() {
+    if (!currentFilm) return;
+    const f = currentFilm;
+    const idx = watchlist.findIndex(w => w.id === f.id);
+    if (idx === -1) { watchlist.push({id:f.id,titre:f.titre,annee:f.annee,bg:f.bg,genre:f.genre}); showToast(`✓ "${f.titre}" ajouté à ta liste`); }
+    else { watchlist.splice(idx,1); showToast(`"${f.titre}" retiré de ta liste`); }
+    localStorage.setItem('cine_watchlist', JSON.stringify(watchlist));
+    const inList = watchlist.some(w => w.id === f.id);
+    document.getElementById('listBtn').innerHTML = inList ? '<i class="fas fa-check"></i> Dans ma liste' : '<i class="fas fa-plus"></i> Ma liste';
+    applyFilters();
+}
+
+function toggleList(id, titre, annee, bg, genre) {
+    const idx = watchlist.findIndex(w => w.id === id);
+    if (idx === -1) { watchlist.push({id,titre,annee,bg,genre}); showToast(`✓ "${titre}" ajouté à ta liste`); }
+    else { watchlist.splice(idx,1); showToast(`"${titre}" retiré`); }
+    localStorage.setItem('cine_watchlist', JSON.stringify(watchlist));
+    applyFilters();
+}
+
+// ===== TOAST =====
+let toastTimer;
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toastMsg').textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function openSettings() { /* À connecter avec le modal settings */ }
+
+// ===== INIT =====
+(function() {
+    const saved = localStorage.getItem('cine_theme') || 'dark';
+    if (saved !== 'dark') document.body.classList.add('theme-' + saved);
+    applyFilters();
+    // Fermer détail avec Echap
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
+})();
+</script>
+</body>
+</html>

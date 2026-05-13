@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CINÉ-STREAMING - Connexion</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1a1a2e;
+            --secondary: #16213e;
+            --accent: #e74c3c;
+            --text-primary: #ecf0f1;
+            --text-secondary: #bdc3c7;
+            --border-color: #34495e;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            transition: all 0.5s ease;
+        }
+
+        body.dark-theme {
+            --primary: #0f0f1e;
+            --secondary: #1a1a2e;
+            --accent: #e74c3c;
+            --text-primary: #ecf0f1;
+            --text-secondary: #bdc3c7;
+            --border-color: #34495e;
+        }
+
+        body.rose-theme {
+            --primary: #faf0e6;
+            --secondary: #f5e6d3;
+            --accent: #e91e63;
+            --text-primary: #5a4a42;
+            --text-secondary: #8b7d75;
+            --border-color: #e8d5c4;
+        }
+
+        body.bleu-theme {
+            --primary: #e3f2fd;
+            --secondary: #bbdefb;
+            --accent: #1976d2;
+            --text-primary: #1a237e;
+            --text-secondary: #455a64;
+            --border-color: #90caf9;
+        }
+
+        /* Carousel en arrière-plan */
+        .background-carousel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--primary);
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .carousel-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+        }
+
+        .carousel-item {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            flex-shrink: 0;
+            overflow: hidden;
+            opacity: 0.5;
+            transition: opacity 0.8s ease;
+        }
+
+        .carousel-item.active {
+            opacity: 0.7;
+        }
+
+        .carousel-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            animation: zoomIn 15s ease-in-out infinite;
+        }
+
+        @keyframes zoomIn {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        /* Overlay sombre */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, 
+                rgba(15, 15, 30, 0.75) 0%,
+                rgba(26, 26, 46, 0.85) 100%);
+            z-index: 1;
+            animation: fadeOverlay 1s ease;
+        }
+
+        @keyframes fadeOverlay {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        body.rose-theme .overlay {
+            background: linear-gradient(135deg, 
+                rgba(250, 240, 230, 0.5) 0%,
+                rgba(245, 230, 211, 0.6) 100%);
+        }
+
+        body.bleu-theme .overlay {
+            background: linear-gradient(135deg, 
+                rgba(227, 242, 253, 0.5) 0%,
+                rgba(187, 222, 251, 0.6) 100%);
+        }
+
+        /* Container principal */
+        .container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        /* Header avec logo et toggle thème */
+        .header {
+            position: absolute;
+            top: 30px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 40px;
+            animation: fadeDown 0.8s ease;
+        }
+
+        @keyframes fadeDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: bold;
+            letter-spacing: 3px;
+            color: var(--accent);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
+            text-shadow: 0 0 20px var(--accent);
+        }
+
+        /* Toggle thème */
+        .theme-switcher {
+            display: flex;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 12px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .theme-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        .theme-btn.active {
+            background: var(--accent);
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 0 15px var(--accent);
+        }
+
+        .theme-btn:hover {
+            color: var(--text-primary);
+        }
+
+        /* Formulaire */
+        .login-form {
+            background: rgba(26, 26, 46, 0.85);
+            backdrop-filter: blur(20px);
+            padding: 50px 40px;
+            border-radius: 15px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            max-width: 450px;
+            animation: slideUp 0.8s ease;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        body.rose-theme .login-form {
+            background: rgba(245, 230, 211, 0.95);
+        }
+
+        body.bleu-theme .login-form {
+            background: rgba(187, 222, 251, 0.95);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-title {
+            text-align: center;
+            font-size: 28px;
+            margin-bottom: 30px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            animation: fadeIn 0.8s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .form-group:nth-child(1) { animation-delay: 0.2s; }
+        .form-group:nth-child(2) { animation-delay: 0.3s; }
+        .form-group:nth-child(3) { animation-delay: 0.4s; }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="email"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            font-size: 15px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 15px rgba(231, 76, 60, 0.3);
+        }
+
+        .forgot-password {
+            text-align: right;
+            margin-top: 8px;
+        }
+
+        .forgot-password a {
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, var(--accent) 0%, #c0392b 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 30px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(231, 76, 60, 0.4);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .signup-link {
+            text-align: center;
+            margin-top: 25px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .signup-link a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .signup-link a:hover {
+            color: var(--text-primary);
+            text-decoration: underline;
+        }
+
+        /* Indicateurs de carousel */
+        .carousel-dots {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 2;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .dot.active {
+            background: var(--accent);
+            width: 30px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .login-form {
+                max-width: 90%;
+                padding: 40px 25px;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 20px;
+                padding: 20px;
+            }
+
+            .logo {
+                font-size: 24px;
+            }
+
+            .theme-switcher {
+                gap: 8px;
+            }
+
+            .theme-btn {
+                padding: 6px 12px;
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body class="dark-theme">
+
+    <!-- Carousel en arrière-plan -->
+    <div class="background-carousel">
+        <div class="carousel-wrapper" id="carouselWrapper">
+            <div class="carousel-item active"><img src="/login_images/anime1.jpg" alt="Anime 1"></div>
+            <div class="carousel-item"><img src="/login_images/anime2.jpg" alt="Anime 2"></div>
+            <div class="carousel-item"><img src="/login_images/anime3.jpg" alt="Anime 3"></div>
+            <div class="carousel-item"><img src="/login_images/anime4.jpg" alt="Anime 4"></div>
+            <div class="carousel-item"><img src="/login_images/anime5.jpg" alt="Anime 5"></div>
+            <div class="carousel-item"><img src="/login_images/anime6.jpg" alt="Anime 6"></div>
+            <div class="carousel-item"><img src="/login_images/anime7.jpg" alt="Anime 7"></div>
+            <div class="carousel-item"><img src="/login_images/anime8.jpg" alt="Anime 8"></div>
+            <div class="carousel-item"><img src="/login_images/anime9.jpg" alt="Anime 9"></div>
+            <div class="carousel-item"><img src="/login_images/anime10.jpg" alt="Anime 10"></div>
+            <div class="carousel-item"><img src="/login_images/anime11.jpg" alt="Anime 11"></div>
+            <div class="carousel-item"><img src="/login_images/anime12.jpg" alt="Anime 12"></div>
+            <div class="carousel-item"><img src="/login_images/anime13.jpg" alt="Anime 13"></div>
+            <div class="carousel-item"><img src="/login_images/anime14.jpg" alt="Anime 14"></div>
+        </div>
+
+        <!-- Indicateurs -->
+        <div class="carousel-dots" id="dotsContainer"></div>
+    </div>
+
+    <!-- Overlay -->
+    <div class="overlay"></div>
+
+    <!-- Container principal -->
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">CINÉ-STREAMING</div>
+            <div class="theme-switcher">
+                <button class="theme-btn active" onclick="setTheme('dark-theme')">🌙 Sombre</button>
+                <button class="theme-btn" onclick="setTheme('rose-theme')">💕 Rose</button>
+                <button class="theme-btn" onclick="setTheme('bleu-theme')">💙 Bleu</button>
+            </div>
+        </div>
+
+        <!-- Formulaire -->
+        <form class="login-form" method="post" action="/login">
+            <h2 class="form-title">Connexion</h2>
+
+            <div class="form-group">
+                <label for="username">Nom d'utilisateur</label>
+                <input type="text" id="username" name="username" placeholder="Entrez votre nom d'utilisateur" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Mot de passe</label>
+                <input type="password" id="password" name="password" placeholder="Entrez votre mot de passe" required>
+                <div class="forgot-password">
+                    <a href="/forgot-password">Mot de passe oublié?</a>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-login">Se Connecter</button>
+
+            <div class="signup-link">
+                Pas encore de compte? <a href="/signup">S'inscrire ici</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        let currentIndex = 0;
+        const items = document.querySelectorAll('.carousel-item');
+        const itemCount = items.length;
+        const carouselWrapper = document.getElementById('carouselWrapper');
+        const dotsContainer = document.getElementById('dotsContainer');
+
+        // Créer les indicateurs (dots)
+        for (let i = 0; i < itemCount; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'dot';
+            if (i === 0) dot.classList.add('active');
+            dot.onclick = () => goToSlide(i);
+            dotsContainer.appendChild(dot);
+        }
+
+        const dots = document.querySelectorAll('.dot');
+
+        function goToSlide(index) {
+            currentIndex = index;
+            updateCarousel();
+        }
+
+        function nextSlide() {
+            currentIndex = (currentIndex + 1) % itemCount;
+            updateCarousel();
+        }
+
+        function updateCarousel() {
+            // Mettre à jour l'affichage
+            items.forEach((item, index) => {
+                item.classList.remove('active');
+                if (index === currentIndex) {
+                    item.classList.add('active');
+                }
+            });
+
+            // Mettre à jour les dots
+            dots.forEach((dot, index) => {
+                dot.classList.remove('active');
+                if (index === currentIndex) {
+                    dot.classList.add('active');
+                }
+            });
+        }
+
+        // Changer d'image automatiquement chaque 6 secondes
+        setInterval(nextSlide, 6000);
+
+        // Fonction pour changer le thème
+        function setTheme(theme) {
+            document.body.className = theme;
+            
+            // Mettre à jour les boutons actifs
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Sauvegarder la préférence
+            localStorage.setItem('theme', theme);
+        }
+
+        // Charger le thème sauvegardé
+        window.addEventListener('load', () => {
+            const savedTheme = localStorage.getItem('theme') || 'dark-theme';
+            document.body.className = savedTheme;
+            
+            const buttons = document.querySelectorAll('.theme-btn');
+            buttons.forEach((btn, index) => {
+                if ((savedTheme === 'dark-theme' && index === 0) ||
+                    (savedTheme === 'rose-theme' && index === 1) ||
+                    (savedTheme === 'bleu-theme' && index === 2)) {
+                    btn.classList.add('active');
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

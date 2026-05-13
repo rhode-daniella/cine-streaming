@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Musique — CINÉ-STREAMING</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #0a0a0f; --surface: #1a1a2e; --accent: #e50914; --accent2: #ff6b6b;
+            --text: #ffffff; --text-muted: #aaaaaa; --card-bg: #1e1e2e;
+            --nav-bg: rgba(10,10,15,0.95); --sidebar-bg: #0f0f18;
+        }
+        body.theme-rose { --bg: #1a0a12; --surface: #3a1530; --accent: #e91e8c; --accent2: #ff69b4; --card-bg: #2a1525; --nav-bg: rgba(26,10,18,0.95); --sidebar-bg: #120810; }
+        body.theme-bleu { --bg: #0a0f1a; --surface: #152035; --accent: #1e90ff; --accent2: #63b3ff; --card-bg: #152030; --nav-bg: rgba(10,15,26,0.95); --sidebar-bg: #080f18; }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; transition: background 0.5s; }
+
+        /* NAVBAR */
+        nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: var(--nav-bg); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.05); padding: 0 40px; height: 65px; display: flex; align-items: center; justify-content: space-between; }
+        .nav-left { display: flex; align-items: center; gap: 40px; }
+        .logo { font-family: 'Bebas Neue', cursive; font-size: 28px; color: var(--accent); letter-spacing: 3px; text-decoration: none; }
+        .nav-links { display: flex; gap: 28px; list-style: none; }
+        .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
+        .nav-links a:hover, .nav-links a.active { color: var(--text); }
+        .nav-right { display: flex; align-items: center; gap: 16px; }
+        .search-box { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); border-radius: 25px; padding: 7px 16px; }
+        .search-box input { background: none; border: none; outline: none; color: var(--text); font-family: 'Outfit', sans-serif; font-size: 13px; width: 150px; }
+        .search-box input::placeholder { color: var(--text-muted); }
+        .nav-icon { width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; color: var(--text-muted); text-decoration: none; }
+        .nav-icon:hover { background: var(--accent); border-color: var(--accent); color: white; }
+
+        /* MAIN LAYOUT */
+        .page-wrapper { display: flex; margin-top: 65px; min-height: calc(100vh - 65px); }
+
+        /* SIDEBAR PLAYLISTS */
+        .sidebar { width: 280px; min-width: 280px; background: var(--sidebar-bg); border-right: 1px solid rgba(255,255,255,0.06); padding: 30px 20px; position: sticky; top: 65px; height: calc(100vh - 65px); overflow-y: auto; }
+        .sidebar-title { font-family: 'Bebas Neue', cursive; font-size: 18px; letter-spacing: 2px; margin-bottom: 20px; color: var(--accent); }
+        .playlist-item { padding: 12px 14px; border-radius: 8px; background: rgba(255,255,255,0.06); color: var(--text-muted); font-size: 13px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
+        .playlist-item:hover, .playlist-item.active { background: var(--accent); color: white; }
+        .playlist-item i { font-size: 14px; }
+        .new-playlist-btn { width: 100%; padding: 12px; border: 1px dashed rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); color: var(--text-muted); border-radius: 8px; cursor: pointer; font-family: 'Outfit', sans-serif; font-size: 13px; transition: all 0.2s; margin-top: 20px; }
+        .new-playlist-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* MAIN CONTENT */
+        .main-content { flex: 1; padding: 30px 36px; overflow-y: auto; }
+        .search-section { margin-bottom: 40px; }
+        .search-input { width: 100%; padding: 14px 20px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: var(--text); font-family: 'Outfit', sans-serif; font-size: 15px; transition: all 0.3s; }
+        .search-input:focus { outline: none; border-color: var(--accent); background: rgba(255,255,255,0.12); box-shadow: 0 0 20px rgba(229,9,20,0.2); }
+        .search-input::placeholder { color: var(--text-muted); }
+
+        /* SOUNDTRACKS GRID */
+        .soundtracks-section h2 { font-family: 'Bebas Neue', cursive; font-size: 28px; letter-spacing: 2px; margin-bottom: 24px; }
+        .soundtracks-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; margin-bottom: 50px; }
+
+        /* SOUNDTRACK CARD */
+        .soundtrack-card { position: relative; border-radius: 10px; overflow: hidden; cursor: pointer; aspect-ratio: 1; background: var(--card-bg); transition: transform 0.3s, box-shadow 0.3s; }
+        .soundtrack-card:hover { transform: scale(1.05); box-shadow: 0 20px 50px rgba(0,0,0,0.7); }
+        .soundtrack-card img { width: 100%; height: 100%; object-fit: cover; }
+        .soundtrack-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 50%, transparent 100%); opacity: 0; transition: opacity 0.3s; display: flex; flex-direction: column; justify-content: flex-end; padding: 16px; }
+        .soundtrack-card:hover .soundtrack-overlay { opacity: 1; }
+        .soundtrack-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .soundtrack-count { font-size: 12px; color: var(--text-muted); }
+
+        /* SONGS PAGE */
+        .songs-page { display: none; }
+        .songs-page.active { display: block; }
+        .songs-header { display: flex; align-items: center; gap: 20px; margin-bottom: 30px; }
+        .songs-back { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); padding: 10px 18px; border-radius: 8px; cursor: pointer; color: var(--text); font-weight: 500; transition: all 0.2s; }
+        .songs-back:hover { background: var(--accent); border-color: var(--accent); }
+        .songs-title { font-family: 'Bebas Neue', cursive; font-size: 32px; letter-spacing: 2px; }
+        .songs-list { display: flex; flex-direction: column; gap: 8px; }
+
+        /* SONG ITEM */
+        .song-item { display: grid; grid-template-columns: 1fr 120px 100px; gap: 20px; align-items: center; padding: 12px 16px; background: rgba(255,255,255,0.04); border-radius: 8px; transition: all 0.2s; }
+        .song-item:hover { background: rgba(255,255,255,0.08); }
+        .song-info { display: flex; flex-direction: column; gap: 4px; }
+        .song-title { font-weight: 600; font-size: 14px; }
+        .song-meta { font-size: 12px; color: var(--text-muted); }
+        .song-duration { text-align: center; font-size: 13px; color: var(--text-muted); }
+        .song-action { display: flex; justify-content: flex-end; }
+        .btn-download { display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: var(--accent); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s; }
+        .btn-download:hover { background: var(--accent2); transform: scale(1.05); }
+        .btn-remove { display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: rgba(255,0,0,0.2); color: #ff6b6b; border: 1px solid rgba(255,0,0,0.3); border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s; }
+        .btn-remove:hover { background: rgba(255,0,0,0.3); border-color: rgba(255,0,0,0.5); }
+
+        /* PLAYLIST SONGS */
+        .playlist-songs { display: none; }
+        .playlist-songs.active { display: block; }
+        .empty-playlist { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+        .empty-playlist i { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+        .empty-playlist p { font-size: 14px; }
+
+        /* TOAST */
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--surface); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 14px 24px; font-size: 14px; font-weight: 500; z-index: 3000; transition: transform 0.4s; display: flex; align-items: center; gap: 10px; }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast i { color: var(--accent); }
+
+        /* FOOTER */
+        footer { background: #050508; border-top: 1px solid rgba(255,255,255,0.06); padding: 30px 60px; margin-top: 60px; }
+        .footer-copy { font-size: 12px; color: var(--text-muted); }
+        .footer-copy span { color: var(--accent); font-weight: 600; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav>
+    <div class="nav-left">
+        <a href="/" class="logo">CINÉ</a>
+        <ul class="nav-links">
+            <li><a href="/">Accueil</a></li>
+            <li><a href="/catalogue">Catalogue</a></li>
+            <li><a href="/music" class="active">Musique</a></li>
+        </ul>
+    </div>
+    <div class="nav-right">
+        <div class="nav-icon">
+            <i class="fas fa-bookmark"></i>
+        </div>
+        <div class="nav-icon">
+            <i class="fas fa-cog"></i>
+        </div>
+        <div class="nav-icon" style="width:38px;height:38px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;">D</div>
+    </div>
+</nav>
+
+<!-- PAGE WRAPPER -->
+<div class="page-wrapper">
+
+    <!-- SIDEBAR PLAYLISTS -->
+    <aside class="sidebar">
+        <h3 class="sidebar-title">Ma Musique</h3>
+        <div class="playlist-item active" onclick="switchPlaylist('all')">
+            <i class="fas fa-music"></i> Toutes les musiques
+        </div>
+        <div id="playlistsContainer"></div>
+        <button class="new-playlist-btn" onclick="createPlaylist()">
+            <i class="fas fa-plus"></i> Nouvelle playlist
+        </button>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        <!-- SOUNDTRACKS GRID -->
+        <div id="soundtracksView">
+            <div class="search-section">
+                <input type="text" class="search-input" id="searchInput" placeholder="🔍 Chercher une chanson...">
+            </div>
+
+            <h2>Soundtracks Populaires</h2>
+            <div class="soundtracks-grid" id="soundtracksGrid"></div>
+        </div>
+
+        <!-- SONGS VIEW -->
+        <div id="songsView" class="songs-page">
+            <div class="songs-header">
+                <button class="songs-back" onclick="backToSoundtracks()">
+                    <i class="fas fa-arrow-left"></i> Retour
+                </button>
+                <h1 class="songs-title" id="soundtrackTitle"></h1>
+            </div>
+            <div class="songs-list" id="songsList"></div>
+        </div>
+
+        <!-- PLAYLIST VIEW -->
+        <div id="playlistView" class="playlist-songs">
+            <div class="songs-header">
+                <button class="songs-back" onclick="backToPlaylists()">
+                    <i class="fas fa-arrow-left"></i> Retour
+                </button>
+                <h1 class="songs-title" id="playlistTitle">Ma Playlist</h1>
+            </div>
+            <div id="playlistContent"></div>
+        </div>
+    </main>
+</div>
+
+<!-- FOOTER -->
+<footer>
+    <p class="footer-copy">© <span>CINÉ_STREAMING</span> 2025/2026 — Tous droits réservés</p>
+</footer>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+    <i class="fas fa-check-circle"></i>
+    <span id="toastMsg"></span>
+</div>
+
+<script>
+// ===== DONNÉES SOUNDTRACKS =====
+const soundtracks = [
+    { id: 1, titre: "Inception: Original Soundtrack", film: "Inception", artist: "Hans Zimmer", cover: "#0d0d1a", songs: [
+        { id: 101, titre: "Half Remembered Dream", artist: "Hans Zimmer", duration: "3:42" },
+        { id: 102, titre: "We Built Our Own World", artist: "Hans Zimmer", duration: "4:15" },
+        { id: 103, titre: "Dream is Collapsing", artist: "Hans Zimmer", duration: "2:58" },
+        { id: 104, titre: "Paradox", artist: "Hans Zimmer", duration: "3:24" },
+    ]},
+    { id: 2, titre: "Interstellar: Score", film: "Interstellar", artist: "Hans Zimmer", cover: "#000820", songs: [
+        { id: 201, titre: "Cornfield Chase", artist: "Hans Zimmer", duration: "4:32" },
+        { id: 202, titre: "Dust", artist: "Hans Zimmer", duration: "3:18" },
+        { id: 203, titre: "Dreaming of the Crash", artist: "Hans Zimmer", duration: "3:52" },
+    ]},
+    { id: 3, titre: "The Dark Knight Rises", film: "The Dark Knight Rises", artist: "Hans Zimmer", cover: "#1a0000", songs: [
+        { id: 301, titre: "The Fire Rises", artist: "Hans Zimmer", duration: "5:10" },
+        { id: 302, titre: "Rise and Fall", artist: "Hans Zimmer", duration: "4:44" },
+        { id: 303, titre: "Batman", artist: "Hans Zimmer", duration: "3:56" },
+    ]},
+    { id: 4, titre: "Spider-Man: No Way Home", film: "Spider-Man: No Way Home", artist: "Michael Giacchino", cover: "#1a0808", songs: [
+        { id: 401, titre: "A Friendly Neighborhood Spider-Man", artist: "Michael Giacchino", duration: "3:21" },
+        { id: 402, titre: "Gotta Go Home", artist: "Michael Giacchino", duration: "2:45" },
+        { id: 403, titre: "New York Bound", artist: "Michael Giacchino", duration: "4:08" },
+    ]},
+    { id: 5, titre: "Dune: Part Two", film: "Dune: Part Two", artist: "Hans Zimmer", cover: "#0a1a08", songs: [
+        { id: 501, titre: "Herald of the Golden God", artist: "Hans Zimmer", duration: "3:47" },
+        { id: 502, titre: "Dream of Arrakis", artist: "Hans Zimmer", duration: "4:22" },
+        { id: 503, titre: "Sandworm", artist: "Hans Zimmer", duration: "3:15" },
+    ]},
+    { id: 6, titre: "Oppenheimer", film: "Oppenheimer", artist: "Ludwig Göransson", cover: "#1a0a14", songs: [
+        { id: 601, titre: "Atom Bomb", artist: "Ludwig Göransson", duration: "3:28" },
+        { id: 602, titre: "The Debate", artist: "Ludwig Göransson", duration: "4:00" },
+        { id: 603, titre: "Trinity", artist: "Ludwig Göransson", duration: "4:55" },
+    ]},
+    { id: 7, titre: "Barbie", film: "Barbie", artist: "Mark Ronson", cover: "#1a0a08", songs: [
+        { id: 701, titre: "Pink", artist: "Dua Lipa", duration: "3:12" },
+        { id: 702, titre: "Barbie Dreams", artist: "Mark Ronson", duration: "3:45" },
+        { id: 703, titre: "I'm Just Ken", artist: "Ryan Gosling", duration: "3:58" },
+    ]},
+    { id: 8, titre: "Killers of the Flower Moon", film: "Killers of the Flower Moon", artist: "Volker Bertelmann", cover: "#080808", songs: [
+        { id: 801, titre: "Main Theme", artist: "Volker Bertelmann", duration: "4:12" },
+        { id: 802, titre: "Osage County", artist: "Volker Bertelmann", duration: "3:34" },
+        { id: 803, titre: "The Truth Revealed", artist: "Volker Bertelmann", duration: "4:28" },
+    ]},
+];
+
+let userPlaylist = JSON.parse(localStorage.getItem('cine_music_playlist') || '[]');
+let userPlaylists = JSON.parse(localStorage.getItem('cine_custom_playlists') || '[]');
+let currentView = 'soundtracks';
+let currentSoundtrackId = null;
+
+// ===== RENDER SOUNDTRACKS GRID =====
+function renderSoundtracks() {
+    const grid = document.getElementById('soundtracksGrid');
+    grid.innerHTML = soundtracks.map(s => `
+        <div class="soundtrack-card" onclick="viewSongs(${s.id})">
+            <div style="width:100%;height:100%;background:linear-gradient(135deg,${s.cover},${s.cover}dd);display:flex;align-items:center;justify-content:center;">
+                <i class="fas fa-compact-disc" style="font-size:48px;opacity:0.3;"></i>
+            </div>
+            <div class="soundtrack-overlay">
+                <div class="soundtrack-title">${s.titre}</div>
+                <div class="soundtrack-count">${s.songs.length} chansons</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ===== VIEW SONGS =====
+function viewSongs(id) {
+    currentSoundtrackId = id;
+    const st = soundtracks.find(s => s.id === id);
+    document.getElementById('soundtrackTitle').textContent = st.titre;
+    document.getElementById('songsList').innerHTML = st.songs.map(song => `
+        <div class="song-item">
+            <div class="song-info">
+                <div class="song-title">${song.titre}</div>
+                <div class="song-meta">${song.artist} • ${st.film}</div>
+            </div>
+            <div class="song-duration">${song.duration}</div>
+            <div class="song-action">
+                <button class="btn-download" onclick="addToPlaylist(${song.id}, '${song.titre}', '${song.artist}', '${song.duration}')">
+                    <i class="fas fa-download"></i> Télécharger
+                </button>
+            </div>
+        </div>
+    `).join('');
+    document.getElementById('soundtracksView').style.display = 'none';
+    document.getElementById('songsView').classList.add('active');
+}
+
+// ===== BACK TO SOUNDTRACKS =====
+function backToSoundtracks() {
+    document.getElementById('songsView').classList.remove('active');
+    document.getElementById('soundtracksView').style.display = 'block';
+}
+
+// ===== PLAYLIST MANAGEMENT =====
+function addToPlaylist(id, titre, artist, duration) {
+    const exists = userPlaylist.find(s => s.id === id);
+    if (!exists) {
+        userPlaylist.push({ id, titre, artist, duration });
+        localStorage.setItem('cine_music_playlist', JSON.stringify(userPlaylist));
+        showToast(`✓ "${titre}" ajouté à ta playlist`);
+        renderPlaylists();
+    } else {
+        showToast(`"${titre}" est déjà dans ta playlist`);
+    }
+}
+
+function removeFromPlaylist(id) {
+    userPlaylist = userPlaylist.filter(s => s.id !== id);
+    localStorage.setItem('cine_music_playlist', JSON.stringify(userPlaylist));
+    showToast('Chanson supprimée de ta playlist');
+    renderPlaylists();
+    if (currentView === 'playlist') switchPlaylist('all');
+}
+
+function createPlaylist() {
+    const name = prompt('Nom de la nouvelle playlist:');
+    if (name && name.trim()) {
+        userPlaylists.push({ id: Date.now(), name, songs: [] });
+        localStorage.setItem('cine_custom_playlists', JSON.stringify(userPlaylists));
+        renderPlaylists();
+        showToast(`✓ Playlist "${name}" créée`);
+    }
+}
+
+function switchPlaylist(type) {
+    document.querySelectorAll('.playlist-item').forEach(p => p.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    if (type === 'all') {
+        currentView = 'playlist';
+        document.getElementById('soundtracksView').style.display = 'none';
+        document.getElementById('songsView').classList.remove('active');
+        document.getElementById('playlistView').classList.add('active');
+        document.getElementById('playlistTitle').textContent = 'Mes Téléchargements';
+        
+        if (userPlaylist.length === 0) {
+            document.getElementById('playlistContent').innerHTML = `
+                <div class="empty-playlist">
+                    <i class="fas fa-music"></i>
+                    <p>Tu n'as pas encore téléchargé de musiques</p>
+                </div>
+            `;
+        } else {
+            document.getElementById('playlistContent').innerHTML = `
+                <div class="songs-list">
+                    ${userPlaylist.map(song => `
+                        <div class="song-item">
+                            <div class="song-info">
+                                <div class="song-title">${song.titre}</div>
+                                <div class="song-meta">${song.artist}</div>
+                            </div>
+                            <div class="song-duration">${song.duration}</div>
+                            <div class="song-action">
+                                <button class="btn-remove" onclick="removeFromPlaylist(${song.id})">
+                                    <i class="fas fa-trash"></i> Supprimer
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+    }
+}
+
+function renderPlaylists() {
+    const container = document.getElementById('playlistsContainer');
+    container.innerHTML = userPlaylists.map(p => `
+        <div class="playlist-item" onclick="switchPlaylist('custom', ${p.id})">
+            <i class="fas fa-list"></i> ${p.name}
+        </div>
+    `).join('');
+}
+
+function backToPlaylists() {
+    document.getElementById('playlistView').classList.remove('active');
+    document.getElementById('soundtracksView').style.display = 'block';
+    currentView = 'soundtracks';
+}
+
+// ===== SEARCH =====
+function searchSongs() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    const results = soundtracks.flatMap(st => 
+        st.songs.filter(s => s.titre.toLowerCase().includes(query) || s.artist.toLowerCase().includes(query))
+            .map(s => ({ ...s, soundtrack: st.titre }))
+    );
+    
+    if (results.length === 0) {
+        document.getElementById('songsList').innerHTML = '<div class="empty-playlist"><p>Aucune chanson trouvée</p></div>';
+    } else {
+        document.getElementById('songsList').innerHTML = results.map(song => `
+            <div class="song-item">
+                <div class="song-info">
+                    <div class="song-title">${song.titre}</div>
+                    <div class="song-meta">${song.artist} • ${song.soundtrack}</div>
+                </div>
+                <div class="song-duration">${song.duration}</div>
+                <div class="song-action">
+                    <button class="btn-download" onclick="addToPlaylist(${song.id}, '${song.titre}', '${song.artist}', '${song.duration}')">
+                        <i class="fas fa-download"></i> Télécharger
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    document.getElementById('soundtracksView').style.display = 'none';
+    document.getElementById('songsView').classList.add('active');
+    document.getElementById('soundtrackTitle').textContent = 'Résultats de recherche';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('searchInput').addEventListener('input', searchSongs);
+    renderSoundtracks();
+    renderPlaylists();
+});
+
+// ===== TOAST =====
+let toastTimer;
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toastMsg').textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ===== THEME =====
+(function() {
+    const saved = localStorage.getItem('cine_theme') || 'dark';
+    if (saved !== 'dark') document.body.classList.add('theme-' + saved);
+})();
+</script>
+
+</body>
+</html>
