@@ -1,0 +1,10 @@
+[build]
+builder = "buildpacks"
+
+[build.buildpacks]
+  buildpacks = ["paketo-buildpacks/java"]
+
+[build.env]
+  BP_JVM_VERSION = "21"
+  BP_GRADLE_BUILD_ARGUMENTS = "-DskipTests -Dorg.gradle.logging.level=warn"
+  BP_MAVEN_BUILD_ARGUMENTS = "-DskipTests"
