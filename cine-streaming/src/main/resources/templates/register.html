@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription — CINÉ-STREAMING</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --accent: #e50914;
+            --accent2: #ff6b6b;
+            --text: #ffffff;
+            --text-muted: #aaaaaa;
+            --surface: rgba(15,15,25,0.85);
+            --input-bg: rgba(255,255,255,0.07);
+            --border: rgba(255,255,255,0.1);
+        }
+        body.theme-rose { --accent:#e91e8c; --accent2:#ff69b4; }
+        body.theme-bleu  { --accent:#1e90ff; --accent2:#63b3ff; }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+
+        body {
+            font-family:'Outfit',sans-serif;
+            color:var(--text);
+            min-height:100vh;
+            overflow:hidden;
+            background:#0a0a0f;
+        }
+
+        /* BACKGROUND CAROUSEL */
+        .bg-carousel { position:fixed; inset:0; z-index:0; }
+        .bg-slide { position:absolute; inset:0; opacity:0; transition:opacity 1.5s ease; }
+        .bg-slide.active { opacity:1; }
+        .bg-slide img { width:100%; height:100%; object-fit:cover; }
+        .bg-overlay {
+            position:absolute; inset:0;
+            background: linear-gradient(135deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.7) 100%);
+        }
+
+        /* MAIN LAYOUT */
+        .page {
+            position:relative; z-index:1;
+            min-height:100vh;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            padding:20px;
+            overflow-y:auto;
+        }
+
+        /* LOGO */
+        .logo {
+            font-family:'Bebas Neue',cursive;
+            font-size:42px;
+            color:var(--accent);
+            letter-spacing:5px;
+            text-align:center;
+            margin-bottom:4px;
+            text-shadow:0 0 40px rgba(229,9,20,0.5);
+            transition:color 0.5s, text-shadow 0.5s;
+            animation:logoIn 0.8s ease forwards;
+        }
+        .logo-sub {
+            font-size:11px;
+            letter-spacing:4px;
+            color:var(--text-muted);
+            text-align:center;
+            margin-bottom:28px;
+            text-transform:uppercase;
+            animation:logoIn 0.8s ease 0.1s forwards;
+            opacity:0;
+        }
+        @keyframes logoIn { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
+
+        /* CARD */
+        .card {
+            background:var(--surface);
+            backdrop-filter:blur(24px);
+            border:1px solid var(--border);
+            border-radius:20px;
+            padding:36px 40px;
+            width:100%;
+            max-width:460px;
+            animation:cardIn 0.6s ease 0.2s forwards;
+            opacity:0;
+        }
+        @keyframes cardIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+        .card-title {
+            font-family:'Bebas Neue',cursive;
+            font-size:26px;
+            letter-spacing:2px;
+            margin-bottom:6px;
+        }
+        .card-subtitle {
+            font-size:13px;
+            color:var(--text-muted);
+            margin-bottom:28px;
+        }
+
+        /* FORM ROW (2 colonnes) */
+        .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+
+        /* INPUT GROUP */
+        .input-group { margin-bottom:16px; }
+        .input-group label {
+            display:block;
+            font-size:11px;
+            font-weight:700;
+            letter-spacing:1.5px;
+            text-transform:uppercase;
+            color:var(--text-muted);
+            margin-bottom:8px;
+        }
+        .input-wrap {
+            position:relative;
+            display:flex;
+            align-items:center;
+        }
+        .input-wrap i {
+            position:absolute;
+            left:14px;
+            color:var(--text-muted);
+            font-size:14px;
+            transition:color 0.2s;
+        }
+        .input-wrap input {
+            width:100%;
+            background:var(--input-bg);
+            border:1px solid var(--border);
+            border-radius:10px;
+            padding:13px 14px 13px 42px;
+            color:var(--text);
+            font-family:'Outfit',sans-serif;
+            font-size:14px;
+            outline:none;
+            transition:all 0.3s;
+        }
+        .input-wrap input:focus { border-color:var(--accent); background:rgba(255,255,255,0.1); }
+        .input-wrap input:focus + i,
+        .input-wrap input:focus ~ i { color:var(--accent); }
+        .input-wrap input::placeholder { color:rgba(255,255,255,0.3); }
+
+        /* Toggle password */
+        .toggle-pw {
+            position:absolute;
+            right:14px;
+            background:none;
+            border:none;
+            color:var(--text-muted);
+            cursor:pointer;
+            font-size:14px;
+            transition:color 0.2s;
+            padding:0;
+        }
+        .toggle-pw:hover { color:var(--text); }
+
+        /* PASSWORD STRENGTH */
+        .pw-strength { margin-top:8px; }
+        .pw-bars { display:flex; gap:4px; margin-bottom:4px; }
+        .pw-bar { height:3px; flex:1; border-radius:2px; background:rgba(255,255,255,0.1); transition:background 0.3s; }
+        .pw-label { font-size:11px; color:var(--text-muted); }
+
+        /* INPUT VALIDATION */
+        .input-wrap input.valid   { border-color:#22c55e; }
+        .input-wrap input.invalid { border-color:#ef4444; }
+        .field-msg { font-size:11px; margin-top:5px; display:none; }
+        .field-msg.show { display:block; }
+        .field-msg.ok  { color:#22c55e; }
+        .field-msg.err { color:#ef4444; }
+
+        /* GENRE SELECT */
+        .genre-select {
+            display:flex;
+            gap:8px;
+            margin-bottom:16px;
+        }
+        .genre-btn {
+            flex:1;
+            padding:12px;
+            border-radius:10px;
+            border:1px solid var(--border);
+            background:var(--input-bg);
+            color:var(--text-muted);
+            font-family:'Outfit',sans-serif;
+            font-size:13px;
+            font-weight:600;
+            cursor:pointer;
+            transition:all 0.25s;
+            text-align:center;
+        }
+        .genre-btn:hover { border-color:rgba(255,255,255,0.2); color:var(--text); }
+        .genre-btn.active { border-color:var(--accent); background:rgba(229,9,20,0.15); color:var(--text); }
+        .genre-label { font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); margin-bottom:8px; display:block; }
+
+        /* CGU */
+        .cgu-check {
+            display:flex;
+            align-items:flex-start;
+            gap:10px;
+            margin-bottom:22px;
+            cursor:pointer;
+        }
+        .cgu-check input[type="checkbox"] { display:none; }
+        .custom-check {
+            width:18px; height:18px; flex-shrink:0;
+            border:2px solid var(--border);
+            border-radius:4px;
+            display:flex; align-items:center; justify-content:center;
+            transition:all 0.2s; margin-top:1px;
+        }
+        .cgu-check input:checked ~ .custom-check { background:var(--accent); border-color:var(--accent); }
+        .cgu-check input:checked ~ .custom-check::after { content:'✓'; color:white; font-size:11px; font-weight:700; }
+        .cgu-text { font-size:12px; color:var(--text-muted); line-height:1.5; }
+        .cgu-text a { color:var(--accent); text-decoration:none; }
+        .cgu-text a:hover { text-decoration:underline; }
+
+        /* SUBMIT BUTTON */
+        .btn-submit {
+            width:100%;
+            padding:14px;
+            border-radius:10px;
+            border:none;
+            background:var(--accent);
+            color:white;
+            font-family:'Outfit',sans-serif;
+            font-size:15px;
+            font-weight:700;
+            letter-spacing:1px;
+            cursor:pointer;
+            transition:all 0.3s;
+            position:relative;
+            overflow:hidden;
+            margin-bottom:20px;
+        }
+        .btn-submit::after {
+            content:'';
+            position:absolute;
+            inset:0;
+            background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);
+            transform:translateX(-100%);
+            transition:transform 0.5s;
+        }
+        .btn-submit:hover { background:var(--accent2); transform:translateY(-1px); box-shadow:0 8px 25px rgba(229,9,20,0.4); }
+        .btn-submit:hover::after { transform:translateX(100%); }
+        .btn-submit:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+
+        /* DIVIDER */
+        .divider { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+        .divider::before,.divider::after { content:''; flex:1; height:1px; background:var(--border); }
+        .divider span { font-size:12px; color:var(--text-muted); white-space:nowrap; }
+
+        /* SOCIAL BTNS */
+        .social-btns { display:flex; gap:10px; margin-bottom:24px; }
+        .social-btn {
+            flex:1; padding:11px;
+            border-radius:10px;
+            border:1px solid var(--border);
+            background:var(--input-bg);
+            color:var(--text-muted);
+            font-family:'Outfit',sans-serif;
+            font-size:13px; font-weight:500;
+            cursor:pointer; transition:all 0.2s;
+            display:flex; align-items:center; justify-content:center; gap:8px;
+        }
+        .social-btn:hover { border-color:rgba(255,255,255,0.2); color:var(--text); }
+
+        /* LOGIN LINK */
+        .login-link {
+            text-align:center;
+            font-size:13px;
+            color:var(--text-muted);
+        }
+        .login-link a {
+            color:var(--accent);
+            text-decoration:none;
+            font-weight:600;
+            transition:color 0.2s;
+        }
+        .login-link a:hover { color:var(--accent2); }
+
+        /* THEME TOGGLE */
+        .theme-toggle {
+            display:flex;
+            justify-content:center;
+            gap:10px;
+            margin-top:24px;
+        }
+        .theme-dot {
+            width:28px; height:28px;
+            border-radius:50%;
+            border:2px solid transparent;
+            cursor:pointer;
+            transition:all 0.2s;
+        }
+        .theme-dot:hover { transform:scale(1.15); }
+        .theme-dot.active { border-color:white; }
+        .theme-dot.dark { background:linear-gradient(135deg,#0a0a0f,#e50914); }
+        .theme-dot.rose { background:linear-gradient(135deg,#1a0a12,#e91e8c); }
+        .theme-dot.bleu { background:linear-gradient(135deg,#0a0f1a,#1e90ff); }
+
+        /* ERROR BANNER */
+        .error-banner {
+            background:rgba(239,68,68,0.15);
+            border:1px solid rgba(239,68,68,0.3);
+            border-radius:8px;
+            padding:12px 16px;
+            font-size:13px;
+            color:#f87171;
+            margin-bottom:16px;
+            display:none;
+            align-items:center;
+            gap:8px;
+        }
+        .error-banner.show { display:flex; }
+
+        /* SUCCESS BANNER */
+        .success-banner {
+            background:rgba(34,197,94,0.15);
+            border:1px solid rgba(34,197,94,0.3);
+            border-radius:8px;
+            padding:12px 16px;
+            font-size:13px;
+            color:#4ade80;
+            margin-bottom:16px;
+            display:none;
+            align-items:center;
+            gap:8px;
+        }
+        .success-banner.show { display:flex; }
+
+        ::-webkit-scrollbar { width:4px; }
+        ::-webkit-scrollbar-track { background:transparent; }
+        ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.15); border-radius:2px; }
+    </style>
+</head>
+<body>
+
+<!-- BACKGROUND -->
+<div class="bg-carousel">
+    <div class="bg-slide active">
+        <img src="/login_images/anime1.jpg" onerror="this.src='https://placehold.co/1920x1080/0d0d1a/1a1a2e?text=.'" alt="">
+        <div class="bg-overlay"></div>
+    </div>
+    <div class="bg-slide">
+        <img src="/login_images/anime2.jpg" onerror="this.src='https://placehold.co/1920x1080/1a0d0d/2e1a1a?text=.'" alt="">
+        <div class="bg-overlay"></div>
+    </div>
+    <div class="bg-slide">
+        <img src="/login_images/anime3.jpg" onerror="this.src='https://placehold.co/1920x1080/0d1a0d/1a2e1a?text=.'" alt="">
+        <div class="bg-overlay"></div>
+    </div>
+    <div class="bg-slide">
+        <img src="/login_images/anime4.jpg" onerror="this.src='https://placehold.co/1920x1080/1a1a0d/2e2e1a?text=.'" alt="">
+        <div class="bg-overlay"></div>
+    </div>
+    <div class="bg-slide">
+        <img src="/login_images/anime5.jpg" onerror="this.src='https://placehold.co/1920x1080/0d0d0d/1a1a1a?text=.'" alt="">
+        <div class="bg-overlay"></div>
+    </div>
+</div>
+
+<!-- PAGE -->
+<div class="page">
+    <div class="logo">CINÉ-STREAMING</div>
+    <p class="logo-sub">Rejoignez la communauté</p>
+
+    <div class="card">
+        <h2 class="card-title">Créer un compte</h2>
+        <p class="card-subtitle">C'est gratuit et ça prend 1 minute ⚡</p>
+
+        <!-- BANNERS -->
+        <div class="error-banner" id="errorBanner"><i class="fas fa-exclamation-circle"></i><span id="errorMsg"></span></div>
+        <div class="success-banner" id="successBanner"><i class="fas fa-check-circle"></i><span>Compte créé avec succès! Redirection...</span></div>
+
+        <form id="registerForm" onsubmit="handleRegister(event)" novalidate>
+
+            <!-- PRÉNOM + NOM -->
+            <div class="form-row">
+                <div class="input-group">
+                    <label>Prénom</label>
+                    <div class="input-wrap">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="prenom" placeholder="Marie" oninput="validatePrenom()" required>
+                    </div>
+                    <span class="field-msg" id="prenomMsg"></span>
+                </div>
+                <div class="input-group">
+                    <label>Nom</label>
+                    <div class="input-wrap">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="nom" placeholder="Dupont" oninput="validateNom()" required>
+                    </div>
+                    <span class="field-msg" id="nomMsg"></span>
+                </div>
+            </div>
+
+            <!-- USERNAME -->
+            <div class="input-group">
+                <label>Nom d'utilisateur</label>
+                <div class="input-wrap">
+                    <i class="fas fa-at"></i>
+                    <input type="text" id="username" placeholder="marie_dupont" oninput="validateUsername()" required>
+                </div>
+                <span class="field-msg" id="usernameMsg"></span>
+            </div>
+
+            <!-- EMAIL -->
+            <div class="input-group">
+                <label>Adresse email</label>
+                <div class="input-wrap">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="email" placeholder="marie@email.com" oninput="validateEmail()" required>
+                </div>
+                <span class="field-msg" id="emailMsg"></span>
+            </div>
+
+            <!-- PASSWORD -->
+            <div class="input-group">
+                <label>Mot de passe</label>
+                <div class="input-wrap">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="password" placeholder="Min. 8 caractères" oninput="validatePassword()" required>
+                    <button type="button" class="toggle-pw" onclick="togglePw('password','eyeIcon1')" id="eyeIcon1">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div class="pw-strength" id="pwStrength" style="display:none">
+                    <div class="pw-bars">
+                        <div class="pw-bar" id="bar1"></div>
+                        <div class="pw-bar" id="bar2"></div>
+                        <div class="pw-bar" id="bar3"></div>
+                        <div class="pw-bar" id="bar4"></div>
+                    </div>
+                    <span class="pw-label" id="pwLabel"></span>
+                </div>
+            </div>
+
+            <!-- CONFIRM PASSWORD -->
+            <div class="input-group">
+                <label>Confirmer le mot de passe</label>
+                <div class="input-wrap">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="confirm" placeholder="Répétez le mot de passe" oninput="validateConfirm()" required>
+                    <button type="button" class="toggle-pw" onclick="togglePw('confirm','eyeIcon2')" id="eyeIcon2">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <span class="field-msg" id="confirmMsg"></span>
+            </div>
+
+            <!-- THÈME PRÉFÉRÉ -->
+            <span class="genre-label">Thème préféré</span>
+            <div class="genre-select">
+                <button type="button" class="genre-btn active" onclick="selectTheme('dark',this)">🌑 Sombre</button>
+                <button type="button" class="genre-btn" onclick="selectTheme('rose',this)">🌸 Rose</button>
+                <button type="button" class="genre-btn" onclick="selectTheme('bleu',this)">💙 Bleu</button>
+            </div>
+
+            <!-- CGU -->
+            <label class="cgu-check">
+                <input type="checkbox" id="cguCheck" onchange="updateSubmit()">
+                <div class="custom-check"></div>
+                <span class="cgu-text">J'accepte les <a href="/cgu">Conditions d'utilisation</a> et la <a href="/confidentialite">Politique de confidentialité</a> de CINÉ-STREAMING</span>
+            </label>
+
+            <button type="submit" class="btn-submit" id="submitBtn" disabled>
+                <i class="fas fa-rocket" style="margin-right:8px"></i>Créer mon compte
+            </button>
+        </form>
+
+        <div class="divider"><span>ou s'inscrire avec</span></div>
+
+        <div class="social-btns">
+            <button class="social-btn" onclick="socialRegister('google')">
+                <i class="fab fa-google" style="color:#ea4335"></i> Google
+            </button>
+            <button class="social-btn" onclick="socialRegister('facebook')">
+                <i class="fab fa-facebook-f" style="color:#1877f2"></i> Facebook
+            </button>
+        </div>
+
+        <p class="login-link">Déjà un compte ? <a href="/login">Se connecter</a></p>
+    </div>
+
+    <!-- THEME TOGGLE -->
+    <div class="theme-toggle">
+        <div class="theme-dot dark active" onclick="applyTheme('dark',this)" title="Sombre"></div>
+        <div class="theme-dot rose" onclick="applyTheme('rose',this)" title="Rose"></div>
+        <div class="theme-dot bleu" onclick="applyTheme('bleu',this)" title="Bleu"></div>
+    </div>
+</div>
+
+<script>
+// ===== BACKGROUND CAROUSEL =====
+const slides = document.querySelectorAll('.bg-slide');
+let current = 0;
+setInterval(() => {
+    slides[current].classList.remove('active');
+    current = (current + 1) % slides.length;
+    slides[current].classList.add('active');
+}, 6000);
+
+// ===== THEME =====
+let selectedTheme = 'dark';
+
+function applyTheme(theme, dot) {
+    selectedTheme = theme;
+    document.body.className = theme === 'dark' ? '' : 'theme-' + theme;
+    localStorage.setItem('cine_theme', theme);
+    document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
+    dot.classList.add('active');
+}
+
+function selectTheme(theme, btn) {
+    selectedTheme = theme;
+    document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.body.className = theme === 'dark' ? '' : 'theme-' + theme;
+    localStorage.setItem('cine_theme', theme);
+    // Sync theme dots
+    document.querySelectorAll('.theme-dot').forEach(d => {
+        d.classList.toggle('active', d.classList.contains(theme));
+    });
+}
+
+// ===== TOGGLE PASSWORD =====
+function togglePw(inputId, btnId) {
+    const input = document.getElementById(inputId);
+    const btn   = document.getElementById(btnId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        btn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+    } else {
+        input.type = 'password';
+        btn.innerHTML = '<i class="fas fa-eye"></i>';
+    }
+}
+
+// ===== VALIDATION =====
+function setField(inputId, msgId, ok, msg) {
+    const input = document.getElementById(inputId);
+    const msgEl = document.getElementById(msgId);
+    if (!input) return;
+    input.className = ok ? 'valid' : (msg ? 'invalid' : '');
+    if (msgEl) {
+        msgEl.textContent = msg || '';
+        msgEl.className = 'field-msg' + (msg ? ' show ' + (ok ? 'ok' : 'err') : '');
+    }
+    updateSubmit();
+}
+
+function validatePrenom() {
+    const v = document.getElementById('prenom').value.trim();
+    setField('prenom','prenomMsg', v.length >= 2, v.length < 2 && v ? 'Min. 2 caractères' : v.length >= 2 ? '✓ OK' : '');
+}
+function validateNom() {
+    const v = document.getElementById('nom').value.trim();
+    setField('nom','nomMsg', v.length >= 2, v.length < 2 && v ? 'Min. 2 caractères' : v.length >= 2 ? '✓ OK' : '');
+}
+function validateUsername() {
+    const v = document.getElementById('username').value.trim();
+    const ok = /^[a-zA-Z0-9_]{3,20}$/.test(v);
+    setField('username','usernameMsg', ok, v && !ok ? 'Lettres, chiffres et _ uniquement (3-20 car.)' : ok ? '✓ Disponible' : '');
+}
+function validateEmail() {
+    const v = document.getElementById('email').value.trim();
+    const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+    setField('email','emailMsg', ok, v && !ok ? 'Adresse email invalide' : ok ? '✓ Valide' : '');
+}
+function validatePassword() {
+    const v = document.getElementById('password').value;
+    const strength = getStrength(v);
+    const pwStrength = document.getElementById('pwStrength');
+    if (v) {
+        pwStrength.style.display = 'block';
+        updateBars(strength);
+    } else {
+        pwStrength.style.display = 'none';
+    }
+    const ok = v.length >= 8;
+    document.getElementById('password').className = v ? (ok ? 'valid' : 'invalid') : '';
+    validateConfirm();
+    updateSubmit();
+}
+function validateConfirm() {
+    const pw  = document.getElementById('password').value;
+    const cf  = document.getElementById('confirm').value;
+    if (!cf) { setField('confirm','confirmMsg', false, ''); return; }
+    const ok = pw === cf;
+    setField('confirm','confirmMsg', ok, ok ? '✓ Les mots de passe correspondent' : 'Les mots de passe ne correspondent pas');
+}
+
+function getStrength(pw) {
+    let score = 0;
+    if (pw.length >= 8) score++;
+    if (/[A-Z]/.test(pw)) score++;
+    if (/[0-9]/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+    return score;
+}
+function updateBars(score) {
+    const colors = ['#ef4444','#f97316','#eab308','#22c55e'];
+    const labels = ['Très faible','Faible','Moyen','Fort'];
+    for (let i = 1; i <= 4; i++) {
+        const bar = document.getElementById('bar' + i);
+        bar.style.background = i <= score ? colors[score - 1] : 'rgba(255,255,255,0.1)';
+    }
+    document.getElementById('pwLabel').textContent = score > 0 ? labels[score - 1] : '';
+    document.getElementById('pwLabel').style.color = score > 0 ? colors[score - 1] : '';
+}
+
+function isFormValid() {
+    const prenom = document.getElementById('prenom').value.trim();
+    const nom    = document.getElementById('nom').value.trim();
+    const user   = document.getElementById('username').value.trim();
+    const email  = document.getElementById('email').value.trim();
+    const pw     = document.getElementById('password').value;
+    const cf     = document.getElementById('confirm').value;
+    const cgu    = document.getElementById('cguCheck').checked;
+    return prenom.length >= 2 && nom.length >= 2 &&
+           /^[a-zA-Z0-9_]{3,20}$/.test(user) &&
+           /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) &&
+           pw.length >= 8 && pw === cf && cgu;
+}
+
+function updateSubmit() {
+    document.getElementById('submitBtn').disabled = !isFormValid();
+}
+
+// ===== SUBMIT =====
+function handleRegister(e) {
+    e.preventDefault();
+    if (!isFormValid()) return;
+
+    const btn = document.getElementById('submitBtn');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right:8px"></i>Création en cours...';
+    btn.disabled = true;
+
+    // Simulation (à remplacer par l'appel Spring Boot)
+    setTimeout(() => {
+        localStorage.setItem('cine_theme', selectedTheme);
+        document.getElementById('errorBanner').classList.remove('show');
+        document.getElementById('successBanner').classList.add('show');
+        setTimeout(() => { window.location.href = '/login'; }, 1800);
+    }, 1500);
+}
+
+function socialRegister(provider) {
+    window.location.href = '/oauth2/' + provider;
+}
+
+// ===== INIT =====
+(function() {
+    const saved = localStorage.getItem('cine_theme') || 'dark';
+    if (saved !== 'dark') {
+        document.body.classList.add('theme-' + saved);
+        document.querySelectorAll('.theme-dot').forEach(d => {
+            d.classList.toggle('active', d.classList.contains(saved));
+        });
+        document.querySelectorAll('.genre-btn').forEach((b, i) => {
+            const themes = ['dark','rose','bleu'];
+            b.classList.toggle('active', themes[i] === saved);
+        });
+        selectedTheme = saved;
+    }
+})();
+</script>
+</body>
+</html>
